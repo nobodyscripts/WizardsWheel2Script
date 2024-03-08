@@ -1,0 +1,11 @@
+# Block private files
+IsNobody
+IsNobody2
+*.log
+*.Log
+*.ini
+*.zip
+
+# Block vscode workspace files
+*.code-workspace
+.vscode
