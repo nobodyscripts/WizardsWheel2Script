@@ -70,10 +70,10 @@ First push of the script modified to match style of LBR script.
 
 ## TODO
 
-Enchanting stop at X affix
-Get auto timewarp working
-Auto timewarp with selected timeline
-Auto sell items via search
+Enchanting stop at X affix  
+Get auto timewarp working  
+Auto timewarp with selected timeline  
+Auto sell items via search  
 Log new colour overlays so they can be added to detection
 
 ## Known issues
