@@ -76,7 +76,8 @@ fEventItemReset() {
             Sleep(400)
         }
         itemcount++
-        ItemFarmTooltop(itemcount, socketcount, starttime)
+        ItemFarmTooltop(itemcount, socketcount, starttime,
+            RequireGood, RequirePerfect, RequireSocket)
         if (WinActive(WW2WindowTitle)) {
             if (!isArmourSlot) {
                 ; Weapon slot
@@ -87,7 +88,8 @@ fEventItemReset() {
                     isSocketed := true
                 }
                 if (WinActive(WW2WindowTitle)) {
-                    ItemFarmTooltop(itemcount, socketcount, starttime)
+                    ItemFarmTooltop(itemcount, socketcount, starttime,
+                        RequireGood, RequirePerfect, RequireSocket)
                     fSlowClick(350, 275, 51) ; Open weapon item
                 }
             }
@@ -100,7 +102,8 @@ fEventItemReset() {
                     isSocketed := true
                 }
                 if (WinActive(WW2WindowTitle)) {
-                    ItemFarmTooltop(itemcount, socketcount, starttime)
+                    ItemFarmTooltop(itemcount, socketcount, starttime,
+                        RequireGood, RequirePerfect, RequireSocket)
                     fSlowClick(630, 275, 51) ; Open armour item
                 }
             }
@@ -166,16 +169,20 @@ fEventItemReset() {
 }
 
 
-ItemFarmTooltop(itemcount, socketcount, starttime) {
-    timediff := DateDiff(A_Now, starttime, "Seconds")
-    if (itemcount > 0 && socketcount > 0) {
-        ratio := socketcount / itemcount
-    } else {
-        ratio := 0
-    }
-    ratio := Format("{1:.2f}", ratio)
-    ToolTip("Found " itemcount
-        " Items`n" socketcount " of which sockets`n"
-        ratio " Ratio of socketed`nSeconds Taken " timediff,
-        WinRelPosW(20), H / 2 - WinRelPosH(30), 7)
+ItemFarmTooltop(itemcount, socketcount, starttime, RequireGood, RequirePerfect,
+    RequireSocket) {
+        timediff := DateDiff(A_Now, starttime, "Seconds")
+        if (itemcount > 0 && socketcount > 0) {
+            ratio := socketcount / itemcount * 100
+            ratio := Format("{1:.2f}", ratio)
+        } else {
+            ratio := 0
+        }
+        ToolTip("Found " itemcount
+            " Items`n" socketcount " of which sockets`n"
+            ratio "% of socketed`nSeconds Taken " timediff 
+            "`nRequire 90%: " BinToStr(RequireGood)
+            "`nRequire 100%: " BinToStr(RequirePerfect)
+            "`nRequire socketed: " BinToStr(RequireSocket),
+            WinRelPosW(20), H / 2 - WinRelPosH(30), 7)
 }

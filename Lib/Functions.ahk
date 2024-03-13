@@ -312,3 +312,11 @@ IsWizardSpotChanged() {
     }
     return false
 }
+
+BinToStr(var) {
+    if (var) {
+        return "true"
+    } else {
+        return "false"
+    }
+}
