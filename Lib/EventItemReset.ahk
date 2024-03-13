@@ -4,13 +4,17 @@ fEventItemReset() {
     socketcount := 0
     itemcount := 0
     starttime := A_Now
-    isArmourSlot := false
-    storeSlot := 6
+    isArmourSlot := true
+    storeSlot := 4
     RequirePerfect := false
     RequireGood := true
     RequireSocket := true
     Log("Started")
     loop {
+        if (!WinActive(WW2WindowTitle)) {
+            Log("Window not found, closing event item reset.")
+            return
+        }
         isSocketed := false
         isPerfect := false
         isGood := false
@@ -82,8 +86,10 @@ fEventItemReset() {
                     socketcount++
                     isSocketed := true
                 }
-                ItemFarmTooltop(itemcount, socketcount, starttime)
-                fSlowClick(350, 275, 51) ; Open weapon item
+                if (WinActive(WW2WindowTitle)) {
+                    ItemFarmTooltop(itemcount, socketcount, starttime)
+                    fSlowClick(350, 275, 51) ; Open weapon item
+                }
             }
             if (isArmourSlot) {
                 ; Armour slot
@@ -93,12 +99,16 @@ fEventItemReset() {
                     socketcount++
                     isSocketed := true
                 }
-                ItemFarmTooltop(itemcount, socketcount, starttime)
-                fSlowClick(630, 275, 51) ; Open armour item
+                if (WinActive(WW2WindowTitle)) {
+                    ItemFarmTooltop(itemcount, socketcount, starttime)
+                    fSlowClick(630, 275, 51) ; Open armour item
+                }
             }
-            Sleep(72)
-            MouseMove(WinRelPosW(1050), WinRelPosH(624))
-            Sleep(1000)
+            if (WinActive(WW2WindowTitle)) {
+                Sleep(72)
+                MouseMove(WinRelPosW(1050), WinRelPosH(624))
+                Sleep(1000)
+            }
             try {
                 found := ImageSearch(&OutX, &OutY,
                     WinRelPosW(190), WinRelPosH(120),
@@ -128,8 +138,8 @@ fEventItemReset() {
                     return
                 }
             }
-            
-            If (RequirePerfect && isPerfect) {
+
+            If ((RequireGood || RequirePerfect) && isPerfect) {
                 if (RequireSocket && isSocketed) {
                     Log("Found 100% socketed")
                     return
@@ -146,11 +156,11 @@ fEventItemReset() {
             if (!RequireGood && !RequirePerfect && !RequireSocket) {
                 Log("Found any? Set a requirement.")
             }
-            Sleep(50)
             if (WinActive(WW2WindowTitle)) {
+                Sleep(50)
                 fSlowClick(1015, 56, 72) ; Close item
+                Sleep(500)
             }
-            Sleep(500)
         }
     }
 }
@@ -159,10 +169,11 @@ fEventItemReset() {
 ItemFarmTooltop(itemcount, socketcount, starttime) {
     timediff := DateDiff(A_Now, starttime, "Seconds")
     if (itemcount > 0 && socketcount > 0) {
-        ratio := itemcount / socketcount
+        ratio := socketcount / itemcount
     } else {
         ratio := 0
     }
+    ratio := Format("{1:.2f}", ratio)
     ToolTip("Found " itemcount
         " Items`n" socketcount " of which sockets`n"
         ratio " Ratio of socketed`nSeconds Taken " timediff,
