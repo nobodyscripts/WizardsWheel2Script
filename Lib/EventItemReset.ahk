@@ -125,6 +125,12 @@ fEventItemReset() {
                 If (found) {
                     isGood := true
                 }
+                found := ImageSearch(&OutX, &OutY,
+                    WinRelPosW(190), WinRelPosH(120),
+                    WinRelPosW(916), WinRelPosH(491), A_ScriptDir "\Images\Quality09.png")
+                If (found) {
+                    isGood := false
+                }
 
             } catch as exc {
                 Log("Error searc failed - " exc.Message)
