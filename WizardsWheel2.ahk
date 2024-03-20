@@ -9,6 +9,9 @@
 #Include Lib\IronChef.ahk
 #Include Lib\EventItemReset.ahk
 
+SendMode("Input") ; Support for vm
+; Can be Input, Event, Play, InputThenPlay if Input doesn't work for you
+
 global X, Y, W, H
 global WW2WindowTitle := "Wizard's Wheel 2 ahk_class UnityWndClass ahk_exe Wizard's Wheel 2.exe"
 
@@ -53,6 +56,16 @@ if WinExist(WW2WindowTitle) {
     toggle := !toggle
 }
 
+*F10:: { ; Item purchase save spamming
+    Static on10 := False
+    Log("F10: Pressed")
+    If (on10 := !on10) {
+        fEventItemReset()
+    } Else {
+        Reload()
+    }
+}
+
 *F11:: { ; Autoclicker
     Static on11 := False
     Log("F11: Pressed")
@@ -78,13 +91,16 @@ if WinExist(WW2WindowTitle) {
     }
 }
 
-*F10:: { ; Item purchase save spamming
-    Static on10 := False
-    Log("F10: Pressed")
-    If (on10 := !on10) {
-        fEventItemReset()
-    } Else {
-        Reload()
+*F12:: {
+    global W, H, X, Y
+    WinMove(, , 1294, 703, WW2WindowTitle)
+    WinWait(WW2WindowTitle)
+
+    if WinExist(WW2WindowTitle) {
+        WinGetClientPos(&X, &Y, &W, &H, WW2WindowTitle)
+        if (W != "1278" || H != "664") {
+            Log("Resized window to 1294*703 client size should be 1278*664, found: " W "*" H)
+        }
     }
 }
 
