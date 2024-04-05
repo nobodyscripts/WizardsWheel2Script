@@ -63,6 +63,6 @@ cPlayButtonTest() {
 
 cVillageLoadedTest() {
     o := RelCoord()
-    o.SetCoordRel(2070, 10)
+    o.SetCoordRel(2100, 5)
     return o
 }
