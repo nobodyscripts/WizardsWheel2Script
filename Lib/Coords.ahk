@@ -34,10 +34,35 @@ Class RelCoord {
         return "X: " this.x " Y: " this.y
     }
 
+    GetColour() {
+        try {
+            colour := PixelGetColor(this.x, this.y)
+        } catch as exc {
+            Log("Error 36: GetColour check failed - " exc.Message)
+            MsgBox("Could not conduct the search due to the following error:`n"
+                exc.Message)
+        }
+        return colour
+    }
+
+    ToolTipAtCoord() {
+        ToolTip(" ", this.x, this.y, 15)
+    }
 }
-/* 
+/*
 SampleCoord() {
     o := RelCoord()
     o.SetCoordRel(2130, 420)
     return o
 } */
+cPlayButtonTest() {
+    o := RelCoord()
+    o.SetCoordRel(1500, 1100)
+    return o
+}
+
+cVillageLoadedTest() {
+    o := RelCoord()
+    o.SetCoordRel(2070, 10)
+    return o
+}

@@ -38,11 +38,15 @@ fEventItemReset() {
         }
         if (WinActive(WW2WindowTitle)) {
             fSlowClick(946, 381, 51) ; Load Save
-            Sleep(2500)
+        }
+        while (!IsPlayButtonSeen()) {
+            Sleep(100)
         }
         if (WinActive(WW2WindowTitle)) {
             fSlowClick(624, 525, 51) ; Play
-            Sleep(2000)
+        }
+        while (!IsVillageLoaded()) {
+            Sleep(50)
         }
         if (WinActive(WW2WindowTitle)) {
             fSlowClick(915, 231, 51) ; Igloo
@@ -186,9 +190,26 @@ ItemFarmTooltop(itemcount, socketcount, starttime, RequireGood, RequirePerfect,
         }
         ToolTip("Found " itemcount
             " Items`n" socketcount " of which sockets`n"
-            ratio "% of socketed`nSeconds Taken " timediff 
+            ratio "% of socketed`nSeconds Taken " timediff
             "`nRequire 90%: " BinToStr(RequireGood)
             "`nRequire 100%: " BinToStr(RequirePerfect)
             "`nRequire socketed: " BinToStr(RequireSocket),
             WinRelPosW(20), H / 2 - WinRelPosH(30), 7)
 }
+
+IsPlayButtonSeen() {
+    playbutton := cPlayButtonTest()
+    if (playbutton.GetColour() = "0xBC00F5") {
+        return true
+    }
+    return false
+}
+
+IsVillageLoaded() {
+    uiPanel := cVillageLoadedTest()
+    if (uiPanel.GetColour() = "0x3B8D9E") {
+        return true
+    }
+    return false
+}
+
