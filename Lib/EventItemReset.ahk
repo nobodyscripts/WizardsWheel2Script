@@ -1,15 +1,30 @@
 #Requires AutoHotkey v2.0
 
 fEventItemReset() {
+    Count := 3 ; Amount
+    Num := 1 ; Don't edit
+    Log("Started")
+    while (Count > 0) {
+        Log("Getting item " Num)
+        GetGoodItem(Num)
+        Sleep(300)
+        StoreGoodItem()
+        Sleep(300)
+        Count--
+        Num++
+    }
+}
+
+GetGoodItem(Num) {
     socketcount := 0
     itemcount := 0
     starttime := A_Now
-    isArmourSlot := true
-    storeSlot := 4
-    RequirePerfect := false
-    RequireGood := true
-    RequireSocket := true
-    Log("Started")
+    isArmourSlot := true ; Which slot to check for the new item
+    storeSlot := 1 ; Which slot to purchase from, tl, tr, l, r, l2, r2, bl, br
+    RequirePerfect := false ; Unless you really need perfects save time with it off
+    RequireGood := true ; 90% or higher
+    RequireSocket := true ; Always valuable
+    CloseButton := cInventoryCloseButton()
     loop {
         if (!WinActive(WW2WindowTitle)) {
             Log("Window not found, closing event item reset.")
@@ -20,35 +35,41 @@ fEventItemReset() {
         isGood := false
         Sleep(300)
 
-        if (WinActive(WW2WindowTitle)) {
-            fSlowClick(1020, 55, 34) ; Close inv
-            Sleep(150)
+        while (WinActive(WW2WindowTitle) && CloseButton.GetColour() = "0xF50000") {
+            Log("Closing window")
+            CloseButton.ClickOffset()
+            Sleep(50)
         }
-        if (WinActive(WW2WindowTitle)) {
-            fSlowClick(1020, 55, 101) ; Close inv
-            Sleep(150)
+        while (cOptionsOpenButton().GetColour() != "0xBDCBDE"){
+            Sleep(50)
         }
-        if (WinActive(WW2WindowTitle)) {
-            fSlowClick(1020, 55, 101) ; Close inv
-            Sleep(650)
+        while (WinActive(WW2WindowTitle) && cOptionsOpenButton().GetColour() = "0xBDCBDE") {
+            Log("Options")
+            cOptionsOpenButton().ClickOffset(, , 54)
+            Sleep(50)
         }
-        if (WinActive(WW2WindowTitle)) {
-            fSlowClick(1238, 31, 51) ; Options
-            Sleep(550)
-        }
-        if (WinActive(WW2WindowTitle)) {
-            fSlowClick(946, 381, 51) ; Load Save
-        }
-        while (!IsPlayButtonSeen()) {
-            Sleep(100)
-        }
-        if (WinActive(WW2WindowTitle)) {
-            fSlowClick(624, 525, 51) ; Play
-        }
-        while (!IsVillageLoaded()) {
+        while (cOptionsLoadSaveButton().GetColour() != "0x9FEDAC"){
+            ; wait for save load button
             Sleep(50)
         }
         if (WinActive(WW2WindowTitle)) {
+            Log("Load save")
+            fSlowClick(946, 381, 51) ; Load Save
+        }
+        while (!IsPlayButtonSeen()) {
+            Log("Waiting on play button")
+            Sleep(100)
+        }
+        if (WinActive(WW2WindowTitle)) {
+            Log("Clicking play")
+            fSlowClick(624, 525, 51) ; Play
+        }
+        while (!IsVillageLoaded()) {
+            Log("Waiting on load")
+            Sleep(50)
+        }
+        if (WinActive(WW2WindowTitle)) {
+            Log("Open igloo")
             fSlowClick(915, 231, 51) ; Igloo
             Sleep(400)
         }
@@ -69,19 +90,29 @@ fEventItemReset() {
                 default:
                     fSlowClick(535, 250, 51) ; Buy row 1 l
             }
+            Log("Purchase item")
             Sleep(400)
         }
-        if (WinActive(WW2WindowTitle)) {
-            fSlowClick(1014, 57, 51) ; Close shop
-            Sleep(400)
+        While (WinActive(WW2WindowTitle) && cIglooCloseButton().GetColour() != "0xF50000") {
+            Log(cIglooCloseButton().GetColour())
+            Sleep(50)
         }
-        if (WinActive(WW2WindowTitle)) {
-            fSlowClick(1052, 624, 51) ; Open inv
+        while (WinActive(WW2WindowTitle) && cIglooCloseButton().GetColour() = "0xF50000") {
+            Log("Closing Igloo")
+            cIglooCloseButton().ClickOffset()
+            Sleep(250)
+        }
+        While (WinActive(WW2WindowTitle) && cInventoryOpenButton().GetColour() != "0xEFCF84") {
+            Sleep(50)
+        }
+        While (WinActive(WW2WindowTitle) && cInventoryOpenButton().GetColour() = "0xEFCF84") {
+            Log("Opening Inventory")
+            cInventoryOpenButton().ClickOffset() ; Open inv
             Sleep(400)
         }
         itemcount++
         ItemFarmTooltop(itemcount, socketcount, starttime,
-            RequireGood, RequirePerfect, RequireSocket)
+            RequireGood, RequirePerfect, RequireSocket, Num)
         if (WinActive(WW2WindowTitle)) {
             if (!isArmourSlot) {
                 ; Weapon slot
@@ -93,7 +124,7 @@ fEventItemReset() {
                 }
                 if (WinActive(WW2WindowTitle)) {
                     ItemFarmTooltop(itemcount, socketcount, starttime,
-                        RequireGood, RequirePerfect, RequireSocket)
+                        RequireGood, RequirePerfect, RequireSocket, Num)
                     fSlowClick(350, 275, 51) ; Open weapon item
                 }
             }
@@ -107,7 +138,7 @@ fEventItemReset() {
                 }
                 if (WinActive(WW2WindowTitle)) {
                     ItemFarmTooltop(itemcount, socketcount, starttime,
-                        RequireGood, RequirePerfect, RequireSocket)
+                        RequireGood, RequirePerfect, RequireSocket, Num)
                     fSlowClick(630, 275, 51) ; Open armour item
                 }
             }
@@ -178,9 +209,44 @@ fEventItemReset() {
     }
 }
 
+StoreGoodItem() {
+    While (WinActive(WW2WindowTitle) && cInventoryStorageButton().GetColour() = "0x007EF5") {
+        cInventoryStorageButton().ClickOffset(, , 54)
+        Sleep(150)
+    }
+
+    while (WinActive(WW2WindowTitle) && cInventoryCloseButton().GetColour() = "0xF50000") {
+        cInventoryCloseButton().ClickOffset(, , 54)
+        Sleep(150)
+    }
+    while (cOptionsOpenButton().GetColour() != "0xBDCBDE"){
+        Sleep(50)
+    }
+    while (WinActive(WW2WindowTitle) && cOptionsOpenButton().GetColour() = "0xBDCBDE") {
+        cOptionsOpenButton().ClickOffset(, , 54)
+        Sleep(150)
+    }
+    while (cOptionsCopySaveButton().GetColour() != "0x9FEDAC"){
+        ; wait for save load button
+        Sleep(50)
+    }
+    if (WinActive(WW2WindowTitle)) {
+        cOptionsCopySaveButton().ClickOffset(, , 54) ; Copy Save
+        Sleep(150)
+        cOptionsCopySaveButton().ClickOffset(, , 54) ; Copy Save
+        Sleep(150)
+        cOptionsCopySaveButton().ClickOffset(, , 54) ; Copy Save
+        Sleep(150)
+    }
+    while (WinActive(WW2WindowTitle) && cOptionsCloseButton().GetColour() = "0xF50000") {
+        Log("Closing window")
+        cOptionsCloseButton().ClickOffset()
+        Sleep(50)
+    }
+}
 
 ItemFarmTooltop(itemcount, socketcount, starttime, RequireGood, RequirePerfect,
-    RequireSocket) {
+    RequireSocket, Num) {
         timediff := DateDiff(A_Now, starttime, "Seconds")
         if (itemcount > 0 && socketcount > 0) {
             ratio := socketcount / itemcount * 100
@@ -188,7 +254,7 @@ ItemFarmTooltop(itemcount, socketcount, starttime, RequireGood, RequirePerfect,
         } else {
             ratio := 0
         }
-        ToolTip("Found " itemcount
+        ToolTip("Stored " Num - 1 " correct items.`nFound " itemcount
             " Items`n" socketcount " of which sockets`n"
             ratio "% of socketed`nSeconds Taken " timediff
             "`nRequire 90%: " BinToStr(RequireGood)
@@ -212,4 +278,3 @@ IsVillageLoaded() {
     }
     return false
 }
-

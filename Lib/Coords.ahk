@@ -10,6 +10,12 @@ Class RelCoord {
     x := 0
     y := 0
 
+    SetCoord768(xin, yin) {
+        this.x := WinRelPosW(xin)
+        this.y := WinRelPosH(yin)
+        return this
+    }
+
     SetCoordRel(xin, yin) {
         this.x := WinRelPosLargeW(xin)
         this.y := WinRelPosLargeH(yin)
@@ -63,6 +69,55 @@ cPlayButtonTest() {
 
 cVillageLoadedTest() {
     o := RelCoord()
-    o.SetCoordRel(2100, 5)
+    o.SetCoord768(1090, 3)
     return o
 }
+
+cInventoryStorageButton() {
+    o := RelCoord()
+    o.SetCoord768(616, 540)
+    return o
+}
+
+cIglooCloseButton() {
+    o := RelCoord()
+    o.SetCoord768(1012, 58)
+    return o
+}
+
+cInventoryCloseButton() {
+    o := RelCoord()
+    o.SetCoord768(1032, 57)
+    return o
+}
+
+cInventoryOpenButton() {
+    o := RelCoord()
+    o.SetCoord768(1047, 626)
+    return o
+}
+
+cOptionsOpenButton() {
+    o := RelCoord()
+    o.SetCoord768(1240, 47)
+    return o
+}
+
+cOptionsCopySaveButton() {
+    o := RelCoord()
+    o.SetCoord768(844, 394)
+    return o
+}
+
+cOptionsCloseButton() {
+    o := RelCoord()
+    o.SetCoord768(1040, 55)
+    return o
+}
+
+cOptionsLoadSaveButton() {
+    o := RelCoord()
+    o.SetCoord768(913, 370)
+    return o
+}
+
