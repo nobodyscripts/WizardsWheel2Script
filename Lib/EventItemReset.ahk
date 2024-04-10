@@ -1,12 +1,13 @@
 #Requires AutoHotkey v2.0
 
 fEventItemReset() {
-    Count := 3 ; Amount
+    Count := 4 ; Amount
     Num := 1 ; Don't edit
+    starttime := A_Now
     Log("Started")
     while (Count > 0) {
         Log("Getting item " Num)
-        GetGoodItem(Num)
+        GetGoodItem(Num, starttime)
         Sleep(300)
         StoreGoodItem()
         Sleep(300)
@@ -15,10 +16,9 @@ fEventItemReset() {
     }
 }
 
-GetGoodItem(Num) {
+GetGoodItem(Num, starttime) {
     socketcount := 0
     itemcount := 0
-    starttime := A_Now
     isArmourSlot := true ; Which slot to check for the new item
     storeSlot := 1 ; Which slot to purchase from, tl, tr, l, r, l2, r2, bl, br
     RequirePerfect := false ; Unless you really need perfects save time with it off
@@ -36,7 +36,6 @@ GetGoodItem(Num) {
         Sleep(300)
 
         while (WinActive(WW2WindowTitle) && CloseButton.GetColour() = "0xF50000") {
-            Log("Closing window")
             CloseButton.ClickOffset()
             Sleep(50)
         }
@@ -44,7 +43,6 @@ GetGoodItem(Num) {
             Sleep(50)
         }
         while (WinActive(WW2WindowTitle) && cOptionsOpenButton().GetColour() = "0xBDCBDE") {
-            Log("Options")
             cOptionsOpenButton().ClickOffset(, , 54)
             Sleep(50)
         }
@@ -53,23 +51,18 @@ GetGoodItem(Num) {
             Sleep(50)
         }
         if (WinActive(WW2WindowTitle)) {
-            Log("Load save")
             fSlowClick(946, 381, 51) ; Load Save
         }
         while (!IsPlayButtonSeen()) {
-            Log("Waiting on play button")
             Sleep(100)
         }
         if (WinActive(WW2WindowTitle)) {
-            Log("Clicking play")
             fSlowClick(624, 525, 51) ; Play
         }
         while (!IsVillageLoaded()) {
-            Log("Waiting on load")
             Sleep(50)
         }
         if (WinActive(WW2WindowTitle)) {
-            Log("Open igloo")
             fSlowClick(915, 231, 51) ; Igloo
             Sleep(400)
         }
@@ -90,7 +83,6 @@ GetGoodItem(Num) {
                 default:
                     fSlowClick(535, 250, 51) ; Buy row 1 l
             }
-            Log("Purchase item")
             Sleep(400)
         }
         While (WinActive(WW2WindowTitle) && cIglooCloseButton().GetColour() != "0xF50000") {
@@ -98,7 +90,6 @@ GetGoodItem(Num) {
             Sleep(50)
         }
         while (WinActive(WW2WindowTitle) && cIglooCloseButton().GetColour() = "0xF50000") {
-            Log("Closing Igloo")
             cIglooCloseButton().ClickOffset()
             Sleep(250)
         }
@@ -106,7 +97,6 @@ GetGoodItem(Num) {
             Sleep(50)
         }
         While (WinActive(WW2WindowTitle) && cInventoryOpenButton().GetColour() = "0xEFCF84") {
-            Log("Opening Inventory")
             cInventoryOpenButton().ClickOffset() ; Open inv
             Sleep(400)
         }
