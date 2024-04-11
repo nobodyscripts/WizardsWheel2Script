@@ -1,5 +1,25 @@
 #Requires AutoHotkey v2.0
 
+fActiveBattle() {
+    static toggle := true
+    if (toggle = false) {
+        ToolTip()
+    } else {
+        Log("X " X ", Y " Y ", W " W ", H " H)
+        ToolTip("Active wheel clicking", 100, 80)
+        fWWClickWheel(true) ; Run as timer doesn't execute straight away
+        fWWClickSkills()
+        fWWClickMimics()
+    }
+    SetTimer(fWWClickWheel, 72 * (toggle))
+    SetTimer(fWWClickSkills, 50000 * (toggle))
+    SetTimer(fWWClickMimics, 72 * (toggle))
+    SetTimer(HasGemBuffExpired, 1000 * (toggle))
+    SetTimer(HasJewelBuffExpired, 1000 * (toggle))
+    SetTimer(HasWizardAppeared, 1000 * (toggle))
+
+    toggle := !toggle
+}
 
 fWWClickWheel(spamTen := false) {
     global X, Y, W, H

@@ -1,18 +1,24 @@
 #Requires AutoHotkey v2.0
 
 fEventItemReset() {
-    Count := 4 ; Amount
-    Num := 1 ; Don't edit
-    starttime := A_Now
-    Log("Started")
-    while (Count > 0) {
-        Log("Getting item " Num)
-        GetGoodItem(Num, starttime)
-        Sleep(300)
-        StoreGoodItem()
-        Sleep(300)
-        Count--
-        Num++
+    Static on10 := False
+    Log("F10: Pressed")
+    If (on10 := !on10) {
+        Count := 1 ; Amount
+        Num := 1 ; Don't edit
+        starttime := A_Now
+        Log("Started")
+        while (Count > 0) {
+            Log("Getting item " Num)
+            GetGoodItem(Num, starttime)
+            Sleep(300)
+            StoreGoodItem()
+            Sleep(300)
+            Count--
+            Num++
+        }
+    } Else {
+        Reload()
     }
 }
 
@@ -20,7 +26,7 @@ GetGoodItem(Num, starttime) {
     socketcount := 0
     itemcount := 0
     isArmourSlot := true ; Which slot to check for the new item
-    storeSlot := 1 ; Which slot to purchase from, tl, tr, l, r, l2, r2, bl, br
+    storeSlot := 4 ; Which slot to purchase from, tl, tr, l, r, l2, r2, bl, br
     RequirePerfect := false ; Unless you really need perfects save time with it off
     RequireGood := true ; 90% or higher
     RequireSocket := true ; Always valuable
@@ -39,14 +45,14 @@ GetGoodItem(Num, starttime) {
             CloseButton.ClickOffset()
             Sleep(50)
         }
-        while (cOptionsOpenButton().GetColour() != "0xBDCBDE"){
+        while (cOptionsOpenButton().GetColour() != "0xBDCBDE") {
             Sleep(50)
         }
         while (WinActive(WW2WindowTitle) && cOptionsOpenButton().GetColour() = "0xBDCBDE") {
             cOptionsOpenButton().ClickOffset(, , 54)
             Sleep(50)
         }
-        while (cOptionsLoadSaveButton().GetColour() != "0x9FEDAC"){
+        while (cOptionsLoadSaveButton().GetColour() != "0x9FEDAC") {
             ; wait for save load button
             Sleep(50)
         }
@@ -209,14 +215,14 @@ StoreGoodItem() {
         cInventoryCloseButton().ClickOffset(, , 54)
         Sleep(150)
     }
-    while (cOptionsOpenButton().GetColour() != "0xBDCBDE"){
+    while (cOptionsOpenButton().GetColour() != "0xBDCBDE") {
         Sleep(50)
     }
     while (WinActive(WW2WindowTitle) && cOptionsOpenButton().GetColour() = "0xBDCBDE") {
         cOptionsOpenButton().ClickOffset(, , 54)
         Sleep(150)
     }
-    while (cOptionsCopySaveButton().GetColour() != "0x9FEDAC"){
+    while (cOptionsCopySaveButton().GetColour() != "0x9FEDAC") {
         ; wait for save load button
         Sleep(50)
     }

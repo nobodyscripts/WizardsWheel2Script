@@ -5,9 +5,12 @@
 #Include Lib\Functions.ahk
 #Include Lib\Coords.ahk
 
-#Include Lib\ActiveBattle.ahk
-#Include Lib\IronChef.ahk
-#Include Lib\EventItemReset.ahk
+#Include Modules\ActiveBattle.ahk
+#Include Modules\IronChef.ahk
+#Include Modules\EventItemReset.ahk
+#Include Modules\GameResize.ahk
+
+#Include Gui\MainGUI.ahk
 
 SendMode("Input") ; Support for vm
 ; Can be Input, Event, Play, InputThenPlay if Input doesn't work for you
@@ -19,6 +22,8 @@ if WinExist(WW2WindowTitle) {
     WinGetClientPos(&X, &Y, &W, &H, WW2WindowTitle)
     ;Log("X " X ", Y " Y ", W " W ", H " H)
 }
+
+RunGui()
 
 #HotIf WinActive(WW2WindowTitle)
 *NumpadSub:: {
@@ -36,34 +41,11 @@ if WinExist(WW2WindowTitle) {
 }
 
 *NumpadEnter:: { ; Ingame script
-    static toggle := true
-    if (toggle = false) {
-        ToolTip()
-    } else {
-        Log("X " X ", Y " Y ", W " W ", H " H)
-        ToolTip("Active wheel clicking", 100, 80)
-        fWWClickWheel(true) ; Run as timer doesn't execute straight away
-        fWWClickSkills()
-        fWWClickMimics()
-    }
-    SetTimer(fWWClickWheel, 72 * (toggle))
-    SetTimer(fWWClickSkills, 50000 * (toggle))
-    SetTimer(fWWClickMimics, 72 * (toggle))
-    SetTimer(HasGemBuffExpired, 1000 * (toggle))
-    SetTimer(HasJewelBuffExpired, 1000 * (toggle))
-    SetTimer(HasWizardAppeared, 1000 * (toggle))
-
-    toggle := !toggle
+    fActiveBattle()
 }
 
 *F10:: { ; Item purchase save spamming
-    Static on10 := False
-    Log("F10: Pressed")
-    If (on10 := !on10) {
-        fEventItemReset()
-    } Else {
-        Reload()
-    }
+    fEventItemReset()
 }
 
 *F11:: { ; Autoclicker
@@ -92,16 +74,7 @@ if WinExist(WW2WindowTitle) {
 }
 
 *F12:: {
-    global W, H, X, Y
-    WinMove(, , 1294, 703, WW2WindowTitle)
-    WinWait(WW2WindowTitle)
-
-    if WinExist(WW2WindowTitle) {
-        WinGetClientPos(&X, &Y, &W, &H, WW2WindowTitle)
-        if (W != "1278" || H != "664") {
-            Log("Resized window to 1294*703 client size should be 1278*664, found: " W "*" H)
-        }
-    }
+    fGameResize()
 }
 
 ; Test script to reset timewarp
