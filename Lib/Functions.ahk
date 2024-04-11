@@ -320,3 +320,10 @@ BinToStr(var) {
         return "false"
     }
 }
+
+IsBool(var) {
+    if(IsInteger(var) && (var = 0 || var = 1)) {
+        return true
+    }
+    return false
+}

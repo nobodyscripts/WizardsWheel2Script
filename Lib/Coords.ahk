@@ -109,6 +109,24 @@ cOptionsCopySaveButton() {
     return o
 }
 
+cOptionsNewCopySaveButton() {
+    o := RelCoord()
+    o.SetCoord768(766, 352)
+    return o
+}
+
+cOptionsNewCloudSaveButton() {
+    o := RelCoord()
+    o.SetCoord768(766, 412)
+    return o
+}
+
+cOptionsNewLoadSaveButton() {
+    o := RelCoord()
+    o.SetCoord768(888, 358)
+    return o
+}
+
 cOptionsCloseButton() {
     o := RelCoord()
     o.SetCoord768(1040, 55)

@@ -1,35 +1,50 @@
 #Requires AutoHotkey v2.0
 
+global EventItemTypeArmour := 0,
+    EventItemAmount := 1,
+    EventItemGood := 0,
+    EventItemPerfect := 0,
+    EventItemSocketed := 0,
+    EventItemStoreSlot := 1
+
 fEventItemReset() {
-    Static on10 := False
-    Log("F10: Pressed")
-    If (on10 := !on10) {
-        Count := 1 ; Amount
-        Num := 1 ; Don't edit
-        starttime := A_Now
-        Log("Started")
-        while (Count > 0) {
-            Log("Getting item " Num)
-            GetGoodItem(Num, starttime)
-            Sleep(300)
-            StoreGoodItem()
-            Sleep(300)
-            Count--
-            Num++
+        Static on10 := False
+        Log("F10: Pressed")
+        if (!IsInteger(EventItemAmount)) {
+            MsgBox("Amount must be an integer. Exiting.")
+            Reload()
         }
-    } Else {
-        Reload()
-    }
+        If (on10 := !on10) {
+            Count := EventItemAmount
+            Num := 1 ; Iterator
+            starttime := A_Now
+            Log("Started")
+            if (Count = 1) {
+                GetGoodItem(Num, starttime)
+            } else {
+                while (Count > 0) {
+                    Log("Getting item " Num)
+                    GetGoodItem(Num, starttime)
+                    Sleep(300)
+                    StoreGoodItem()
+                    Sleep(300)
+                    Count--
+                    Num++
+                }
+            }
+        } Else {
+            Reload()
+        }
 }
 
 GetGoodItem(Num, starttime) {
     socketcount := 0
     itemcount := 0
-    isArmourSlot := true ; Which slot to check for the new item
-    storeSlot := 4 ; Which slot to purchase from, tl, tr, l, r, l2, r2, bl, br
-    RequirePerfect := false ; Unless you really need perfects save time with it off
-    RequireGood := true ; 90% or higher
-    RequireSocket := true ; Always valuable
+    isArmourSlot := EventItemTypeArmour ; Which slot to check for the new item
+    storeSlot := EventItemStoreSlot ; Which slot to purchase from, tl, tr, l, r, l2, r2, bl, br
+    RequireGood := EventItemGood ; 90% or higher
+    RequirePerfect := EventItemPerfect ; Unless you really need perfects save time with it off
+    RequireSocket := EventItemSocketed ; Always valuable
     CloseButton := cInventoryCloseButton()
     loop {
         if (!WinActive(WW2WindowTitle)) {
@@ -41,33 +56,87 @@ GetGoodItem(Num, starttime) {
         isGood := false
         Sleep(300)
 
+        i := 20
         while (WinActive(WW2WindowTitle) && CloseButton.GetColour() = "0xF50000") {
             CloseButton.ClickOffset()
             Sleep(50)
+            i--
+            if (i = 0) {
+                Log("Failure at 1")
+                return
+            }
         }
+
+        i := 20
         while (cOptionsOpenButton().GetColour() != "0xBDCBDE") {
             Sleep(50)
+            i--
+            if (i = 0) {
+                Log("Failure at 2")
+                Log("Colour 2 " cOptionsOpenButton().GetColour())
+                return
+            }
         }
+
+        i := 20
         while (WinActive(WW2WindowTitle) && cOptionsOpenButton().GetColour() = "0xBDCBDE") {
             cOptionsOpenButton().ClickOffset(, , 54)
             Sleep(50)
+            i--
+            if (i = 0) {
+                Log("Failure at 3")
+                return
+            }
         }
-        while (cOptionsLoadSaveButton().GetColour() != "0x9FEDAC") {
-            ; wait for save load button
-            Sleep(50)
+        while (cOptionsLoadSaveButton().GetColour() != "0x9FEDAC" &&
+            (cOptionsNewCopySaveButton().GetColour() != "0x9FEDAC" &&
+                cOptionsNewCloudSaveButton().GetColour() != "0x9FEDAC")) {
+                    ; wait for save load button
+                    Sleep(50)
+                    i--
+                    if (i = 0) {
+                        Log("Failure at 15")
+                        Log(cOptionsLoadSaveButton().GetColour() " "
+                            cOptionsNewCopySaveButton().GetColour() " "
+                            cOptionsNewCloudSaveButton().GetColour())
+                        return
+                    }
         }
-        if (WinActive(WW2WindowTitle)) {
-            fSlowClick(946, 381, 51) ; Load Save
+        if (cOptionsNewCopySaveButton().GetColour() = "0x9FEDAC" &&
+            cOptionsNewCloudSaveButton().GetColour() = "0x9FEDAC") {
+                ;Is new ui
+                cOptionsNewLoadSaveButton().ClickOffset(, , 54) ; Load Save
+                Sleep(150)
+        } else {
+            ;Is old ui
+            if (WinActive(WW2WindowTitle)) {
+                fSlowClick(946, 381, 51) ; Load Save
+            }
         }
+        i := 20
         while (!IsPlayButtonSeen()) {
             Sleep(100)
+            i--
+            if (i = 0) {
+                Log("Failure at 5")
+                return
+            }
         }
+
         if (WinActive(WW2WindowTitle)) {
             fSlowClick(624, 525, 51) ; Play
         }
+
+        i := 20
         while (!IsVillageLoaded()) {
             Sleep(50)
+            i--
+            if (i = 0) {
+                Log("Failure at 6")
+                return
+            }
         }
+
         if (WinActive(WW2WindowTitle)) {
             fSlowClick(915, 231, 51) ; Igloo
             Sleep(400)
@@ -91,20 +160,48 @@ GetGoodItem(Num, starttime) {
             }
             Sleep(400)
         }
+
+        i := 20
         While (WinActive(WW2WindowTitle) && cIglooCloseButton().GetColour() != "0xF50000") {
             Log(cIglooCloseButton().GetColour())
             Sleep(50)
+            i--
+            if (i = 0) {
+                Log("Failure at 7")
+                return
+            }
         }
+
+        i := 20
         while (WinActive(WW2WindowTitle) && cIglooCloseButton().GetColour() = "0xF50000") {
             cIglooCloseButton().ClickOffset()
             Sleep(250)
+            i--
+            if (i = 0) {
+                Log("Failure at 8")
+                return
+            }
         }
+
+        i := 20
         While (WinActive(WW2WindowTitle) && cInventoryOpenButton().GetColour() != "0xEFCF84") {
             Sleep(50)
+            i--
+            if (i = 0) {
+                Log("Failure at 9")
+                return
+            }
         }
+
+        i := 20
         While (WinActive(WW2WindowTitle) && cInventoryOpenButton().GetColour() = "0xEFCF84") {
             cInventoryOpenButton().ClickOffset() ; Open inv
             Sleep(400)
+            i--
+            if (i = 0) {
+                Log("Failure at 10")
+                return
+            }
         }
         itemcount++
         ItemFarmTooltop(itemcount, socketcount, starttime,
@@ -206,38 +303,102 @@ GetGoodItem(Num, starttime) {
 }
 
 StoreGoodItem() {
+    i := 20
     While (WinActive(WW2WindowTitle) && cInventoryStorageButton().GetColour() = "0x007EF5") {
         cInventoryStorageButton().ClickOffset(, , 54)
         Sleep(150)
+        i--
+        if (i = 0) {
+            Log("Failure at 11")
+            return
+        }
     }
 
+    i := 20
     while (WinActive(WW2WindowTitle) && cInventoryCloseButton().GetColour() = "0xF50000") {
         cInventoryCloseButton().ClickOffset(, , 54)
         Sleep(150)
+        i--
+        if (i = 0) {
+            Log("Failure at 12")
+            return
+        }
     }
-    while (cOptionsOpenButton().GetColour() != "0xBDCBDE") {
-        Sleep(50)
-    }
-    while (WinActive(WW2WindowTitle) && cOptionsOpenButton().GetColour() = "0xBDCBDE") {
-        cOptionsOpenButton().ClickOffset(, , 54)
-        Sleep(150)
-    }
-    while (cOptionsCopySaveButton().GetColour() != "0x9FEDAC") {
-        ; wait for save load button
-        Sleep(50)
-    }
-    if (WinActive(WW2WindowTitle)) {
-        cOptionsCopySaveButton().ClickOffset(, , 54) ; Copy Save
-        Sleep(150)
-        cOptionsCopySaveButton().ClickOffset(, , 54) ; Copy Save
-        Sleep(150)
-        cOptionsCopySaveButton().ClickOffset(, , 54) ; Copy Save
-        Sleep(150)
-    }
+
+    i := 20
     while (WinActive(WW2WindowTitle) && cOptionsCloseButton().GetColour() = "0xF50000") {
         Log("Closing window")
         cOptionsCloseButton().ClickOffset()
         Sleep(50)
+        i--
+        if (i = 0) {
+            Log("Failure at 16")
+            return
+        }
+    }
+
+    i := 20
+    while (cOptionsOpenButton().GetColour() != "0xBDCBDE") {
+        Sleep(50)
+        i--
+        if (i = 0) {
+            Log("Failure at 13")
+            Log("Colour 13 " cOptionsOpenButton().GetColour())
+            return
+        }
+    }
+    i := 20
+    while (WinActive(WW2WindowTitle) && cOptionsOpenButton().GetColour() = "0xBDCBDE") {
+        cOptionsOpenButton().ClickOffset(, , 54)
+        Sleep(150)
+        i--
+        if (i = 0) {
+            Log("Failure at 14")
+            return
+        }
+    }
+    i := 20
+    while (cOptionsCopySaveButton().GetColour() != "0x9FEDAC" ||
+        (cOptionsNewCopySaveButton().GetColour() != "0x9FEDAC" &&
+            cOptionsNewCloudSaveButton().GetColour() != "0x9FEDAC")) {
+                ; wait for save load button
+                Sleep(50)
+                i--
+                if (i = 0) {
+                    Log("Failure at 15")
+                    return
+                }
+    }
+    if (cOptionsNewCopySaveButton().GetColour() = "0x9FEDAC" &&
+        cOptionsNewCloudSaveButton().GetColour() = "0x9FEDAC") {
+            ;Is new ui
+            cOptionsNewCopySaveButton().ClickOffset(, , 54) ; Copy Save
+            Sleep(150)
+            cOptionsNewCopySaveButton().ClickOffset(, , 54) ; Copy Save
+            Sleep(150)
+            cOptionsNewCopySaveButton().ClickOffset(, , 54) ; Copy Save
+            Sleep(150)
+    } else {
+        ;Is old ui
+        if (WinActive(WW2WindowTitle)) {
+            cOptionsCopySaveButton().ClickOffset(, , 54) ; Copy Save
+            Sleep(150)
+            cOptionsCopySaveButton().ClickOffset(, , 54) ; Copy Save
+            Sleep(150)
+            cOptionsCopySaveButton().ClickOffset(, , 54) ; Copy Save
+            Sleep(150)
+        }
+    }
+    i := 20
+    while (WinActive(WW2WindowTitle) && cOptionsCloseButton().GetColour() = "0xF50000") {
+        Log("Closing window")
+        cOptionsCloseButton().ClickOffset()
+        Sleep(50)
+        i--
+        if (i = 0) {
+            Log("Failure at 16")
+            return
+        }
     }
 }
 

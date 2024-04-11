@@ -4,6 +4,7 @@
 
 #Include Lib\Functions.ahk
 #Include Lib\Coords.ahk
+#Include Lib\ScriptSettings.ahk
 
 #Include Modules\ActiveBattle.ahk
 #Include Modules\IronChef.ahk
@@ -17,6 +18,19 @@ SendMode("Input") ; Support for vm
 
 global X, Y, W, H
 global WW2WindowTitle := "Wizard's Wheel 2 ahk_class UnityWndClass ahk_exe Wizard's Wheel 2.exe"
+global ScriptsLogFile := A_ScriptDir "\WizardsWheel2.Log"
+global settings := cSettings()
+
+if (!settings.initSettings()) {
+    ; If the first load fails, it attempts to write a new config, this retrys
+    ; loading after that first failure
+    ; Hardcoding 2 attempts because a loop could continuously error
+    Sleep(50)
+    if (!settings.initSettings()) {
+        MsgBox("Script failed to load settings, script closing, try restarting.")
+        ExitApp()
+    }
+}
 
 if WinExist(WW2WindowTitle) {
     WinGetClientPos(&X, &Y, &W, &H, WW2WindowTitle)
