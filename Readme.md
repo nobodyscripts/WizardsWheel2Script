@@ -49,8 +49,7 @@ things are skipping. Increments of 17 should add another frame (at 60fps).
 
 My window size (1440p snapped to corner) 1278x664 client size is what the
 locations are based on, those are adapted to your window size, so set your
-window 'client' to this size for changes or if things don't work. For high
-accuracy situations I maximise the window to capture 2560x1369.
+window 'client' to this size for changes or if things don't work.
 
 All functions have protections to save you in cases of alt tabbing or pop up
 windows taking focus, and should cancel in such cases. Functions will try to

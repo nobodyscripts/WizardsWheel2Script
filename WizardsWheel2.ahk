@@ -1,76 +1,114 @@
 ﻿#Requires AutoHotkey v2.0
-#MaxThreadsPerHotkey 4
+#MaxThreadsPerHotkey 8
 #SingleInstance Force
+; #Warn All
 
-#Include Lib\Functions.ahk
-#Include Lib\Coords.ahk
+/**
+ * Main script file, run this to activate gui and hotkeys
+ */
+
+; Applying these first incase self run functions in includes require them
+Global ScriptsLogFile := A_ScriptDir "\WizardsWheel2.Log"
+Global IsSecondary := false
+
+#Include Lib\hGlobals.ahk
+
+#Include Gui\MainGUI.ahk
+
 #Include Lib\ScriptSettings.ahk
+#Include Lib\Functions.ahk
+#Include Lib\Navigate.ahk
+#Include Lib\cGameWindow.ahk
+#Include Lib\cHotkeysInitScript.ahk
+#Include Lib\hModules.ahk
 
-#Include Modules\ActiveBattle.ahk
-#Include Modules\IronChef.ahk
-#Include Modules\EventItemReset.ahk
-#Include Modules\GameResize.ahk
+#Include Lib\ScriptSettings.ahk
 
 #Include Gui\MainGUI.ahk
 
 SendMode("Input") ; Support for vm
 ; Can be Input, Event, Play, InputThenPlay if Input doesn't work for you
 
-global X, Y, W, H
-global WW2WindowTitle := "Wizard's Wheel 2 ahk_class UnityWndClass ahk_exe Wizard's Wheel 2.exe"
-global ScriptsLogFile := A_ScriptDir "\WizardsWheel2.Log"
-global settings := cSettings()
+DetectHiddenWindows(true)
+Persistent() ; Prevent the script from exiting automatically.
 
-if (!settings.initSettings()) {
+/** @type {cSettings} */
+Global settings := cSettings()
+
+If (!settings.initSettings()) {
     ; If the first load fails, it attempts to write a new config, this retrys
     ; loading after that first failure
     ; Hardcoding 2 attempts because a loop could continuously error
     Sleep(50)
-    if (!settings.initSettings()) {
-        MsgBox("Script failed to load settings, script closing, try restarting.")
+    If (!settings.initSettings()) {
+        MsgBox(
+            "Script failed to load settings, script closing, try restarting.")
         ExitApp()
     }
 }
-
-if WinExist(WW2WindowTitle) {
-    WinGetClientPos(&X, &Y, &W, &H, WW2WindowTitle)
-    ;Log("X " X ", Y " Y ", W " W ", H " H)
-}
-
+Out.I("Script loaded")
 RunGui()
+; Setup script hotkeys
+CreateScriptHotkeys()
 
-#HotIf WinActive(WW2WindowTitle)
-*NumpadSub:: {
-    ;Wildcard shortcut * to allow functions to work while looping with
-    ; modifiers held
-    ExitApp()
+; ------------------- Readme -------------------
+/*
+See Readme.md for readme
+Run this file to load script
+*/
+
+; ------------------- Script Triggers -------------------
+
+CreateScriptHotkeys() {
+    Hotkey("*" Scriptkeys.GetHotkey("AutoClicker"), fAutoClicker)
+    HotIfWinActive(Window.Title)
+    Hotkey("*" Scriptkeys.GetHotkey("Exit"), ExitApp)
+    Hotkey("*" Scriptkeys.GetHotkey("Reload"), cReload)
+    Hotkey("*" Scriptkeys.GetHotkey("GameResize"), fGameResize)
 }
+Global ClipBoardInUseBlock := false
+#HotIf WinActive(Window.Title) and MouseIsOver(Window.Title) and Debug
+    ~LButton:: {
+        Global ClipBoardInUseBlock
+        screenx := screeny := windowx := windowy := clientx := clienty := 0
+        CoordMode("Mouse", "Screen")
+        MouseGetPos(&screenx, &screeny)
+        CoordMode("Mouse", "Window")
+        MouseGetPos(&windowx, &windowy)
+        CoordMode("Mouse", "Client")
+        MouseGetPos(&clientx, &clienty)
 
-*NumpadAdd:: {
-    Reload()
-}
-
-*Numpad0:: {
-    EquipIronChef()
-}
-
-*NumpadEnter:: { ; Ingame script
-    fActiveBattle()
-}
-
-*F10:: { ; Item purchase save spamming
-    fEventItemReset()
-}
-
-*F11:: { ; Autoclicker
-    Static on11 := False
-    Log("F11: Pressed")
-    ;InitGameWindow()
-    if (IsLBRScriptActive()) {
-        return
+        Out.D(
+            "Screen:`t" screenx ", " screeny "`n"
+            ;"Window:`t" windowx ", " windowy "`n"
+            "Client:`t" clientx ", " clienty "`n"
+            ;"`t`t`t   Screen Colour:`t#" SubStr(PixelGetColor(screenx, screeny),3)
+            "`t`t`t   Client Colour:`t#" SubStr(PixelGetColor(clientx, clienty),3)
+            ;"Current zone colour: " Points.ZoneSample.GetColour()
+        )
+        ; A_Clipboard := "cPoint(" clientx ", " clienty ")"
     }
+
+    ~WheelDown:: {
+        Out.D("Wheel down")
+    }
+
+    ~WheelUp:: {
+        Out.D("Wheel up")
+    }
+#HotIf
+
+MouseIsOver(WinTitle) {
+    MouseGetPos , , &Win
+    Return WinExist(WinTitle " ahk_id " Win)
+}
+
+fAutoClicker(*) {
+    Static on11 := false
+    Out.I("F11: Pressed")
+    ;Window.Exist()
     If (on11 := !on11) {
-        while (on11) {
+        While (on11) {
             MouseClick("left", , , , , "D")
             Sleep(17)
             ; Must be higher than 16.67 which is a single frame of 60fps
@@ -83,58 +121,43 @@ RunGui()
         Sleep(17)
         MouseClick("left", , , , , "U")
         Sleep(17)
-        Reload()
+        cReload()
     }
 }
 
-*F12:: {
-    fGameResize()
+fGameResize(*) {
+    Out.I("F12: Pressed")
+    If (!Window.Exist()) {
+        Return
+    }
+    If (WinGetMinMax(Window.Title) != 0) {
+        WinRestore(Window.Title)
+    }
+    ; Changes size of client window for windows 11
+    WinMove(, , 1294, 703, Window.Title)
+    WinWait(Window.Title)
+    Window.Exist()
+    If (Window.W != "1278" || Window.H != "664") {
+        Out.I(
+            "Resized window to 1294*703 client size should be 1278*664, found: " Window
+            .W "*" Window.H)
+    }
 }
+/* 
+fMineStart(*) {
+    Static on13 := false
+    Out.I("Insert: Pressed")
+    InitScriptHotKey()
+    If (on13 := !on13) {
+        Out.I("Insert: Mine Mantainer Activated")
+        ;fMineMaintainer()
+    } Else {
+        Out.I("Insert: Resetting")
+        cReload()
+        Return
+    }
+} */
 
-; Test script to reset timewarp
-
-TestReset() {
-    return
-    /*     fSlowClickRelL(2400, 155)
-    Sleep(300)
-    fSlowClickRelL(2400, 155)
-    Sleep(300)
-    fSlowClickRelL(2400, 155)
-    Sleep(300)
-    fSlowClickRelL(2400, 155)
-    Sleep(300)
-    fSlowClickRelL(2400, 155)
-    Sleep(4000)
-    ToolTip(" ", 5, 5)
-    SetTimer(ToolTip, -500)
-    SendMode("Event")
-    MouseMove(WinRelPosLargeW(1646), WinRelPosLargeH(1200), 2)
-    Sleep(50)
-    MouseClick("left", WinRelPosLargeW(1646), WinRelPosLargeH(1300), , , "D")
-    Sleep(50)
-    MouseMove(WinRelPosLargeW(1646), WinRelPosLargeH(250), 2)
-    Sleep(50)
-    MouseClick("left", WinRelPosLargeW(1646), WinRelPosLargeH(250), , , "U")
-    Sleep(250)
-    MouseClick("left", WinRelPosLargeW(1646), WinRelPosLargeH(1300), , , "D")
-    Sleep(50)
-    MouseMove(WinRelPosLargeW(1646), WinRelPosLargeH(250), 2)
-    Sleep(50)
-    MouseClick("left", WinRelPosLargeW(1646), WinRelPosLargeH(250), , , "U")
-    Sleep(250)
-    MouseClick("left", WinRelPosLargeW(1646), WinRelPosLargeH(1300), , , "D")
-    Sleep(50)
-    MouseMove(WinRelPosLargeW(1646), WinRelPosLargeH(250), 2)
-    Sleep(50)
-    MouseClick("left", WinRelPosLargeW(1646), WinRelPosLargeH(250), , , "U")
-    Sleep(250)
-    ; open temple
-    MouseClick("left", WinRelPosLargeW(2500), WinRelPosLargeH(800), , , "D")
-    Sleep(50)
-    MouseClick("left", WinRelPosLargeW(2500), WinRelPosLargeH(800), , , "U")
-    Sleep(300)
-    ; Timewarp
-     MouseClick("left", WinRelPosLargeW(1300), WinRelPosLargeH(250), , , "D")
-    Sleep(50)
-    MouseClick("left", WinRelPosLargeW(1300), WinRelPosLargeH(250), , , "U") */
+ExitFunc(ExitReason, ExitCode) {
+    Out.I("Script exiting. Due to " ExitReason ".")
 }

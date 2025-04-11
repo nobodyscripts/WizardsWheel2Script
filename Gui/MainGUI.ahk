@@ -12,14 +12,13 @@ Button_Click_Resize(thisGui, info) {
     fGameResize()
 }
 
-
 Button_Click_IronChef(thisGui, info) {
-    WinActivate(WW2WindowTitle)
+    Window.Activate()
     EquipIronChef()
 }
 
 Button_Click_ActiveBattle(thisGui, info) {
-    WinActivate(WW2WindowTitle)
+    Window.Activate()
     fActiveBattle()
 }
 
@@ -27,7 +26,6 @@ RunGui() {
     MyGui := Gui(, "WW2 NobodyScript")
     MyGui.Opt("-SysMenu")
     MyGui.BackColor := "0c0018"
-
 
     MyGui.Add("Text", "ccfcfcf", "Numpad-")
     MyBtn := MyGui.Add("Button", "Default w80", "Exit")
@@ -59,116 +57,205 @@ RunGui() {
 }
 
 Button_Click_EventItem(*) {
-    global EventItemTypeArmour,
+    Global EventItemTypeArmour,
         EventItemAmount,
         EventItemGood,
         EventItemPerfect,
         EventItemSocketed,
-        EventItemStoreSlot
+        EventItemStoreSlot,
+        EventItemID
 
-    Log("Global Event Items: Amount " EventItemAmount " Good " EventItemGood
-        "`nPerf " EventItemPerfect " Socketed " EventItemSocketed
-        "`nStore " EventItemStoreSlot " Type " EventItemTypeArmour)
+    Out.I("Global Event Items: Amount " EventItemAmount " Good " EventItemGood
+        " Perf " EventItemPerfect " Socketed " EventItemSocketed
+        " Store " EventItemStoreSlot " Armour " EventItemTypeArmour " EventID " EventItemID)
     optionsGUI := GUI(, "Options: Event Items")
-    optionsGUI.Opt("+Owner +MinSize +MinSize500x")
+    optionsGUI.Opt("+MinSize +MinSize500x")
     optionsGUI.BackColor := "0c0018"
+    optionsGUI.Add("Text", "ccfcfcf",
+        "Start running while in inventory screen,`r`nwith save to clipboard and slot free.")
 
     optionsGUI.Add("Text", "ccfcfcf", "Event Items Amount:")
     optionsGUI.AddEdit()
     If (IsInteger(EventItemAmount) && EventItemAmount > 0) {
         optionsGUI.Add("UpDown", "vAmount Range1-12", EventItemAmount)
-    } else {
+    } Else {
         optionsGUI.Add("UpDown", "vAmount Range1-12", 4)
     }
 
     optionsGUI.Add("Text", , "")
 
-    if (EventItemGood = true) {
+    If (EventItemGood = true) {
         optionsGUI.Add("CheckBox", "vIsGood ccfcfcf checked", "90%+ Quality")
-    } else {
+    } Else {
         optionsGUI.Add("CheckBox", "vIsGood ccfcfcf", "90%+ Quality")
     }
 
-    if (EventItemPerfect = true) {
+    If (EventItemPerfect = true) {
         optionsGUI.Add("CheckBox", "vIsPerfect ccfcfcf checked", "100% Quality")
-    } else {
+    } Else {
         optionsGUI.Add("CheckBox", "vIsPerfect ccfcfcf", "100% Quality")
     }
 
-    if (EventItemSocketed = true) {
+    If (EventItemSocketed = true) {
         optionsGUI.Add("CheckBox", "vIsSocketed ccfcfcf checked", "Socketed")
-    } else {
+    } Else {
         optionsGUI.Add("CheckBox", "vIsSocketed ccfcfcf", "Socketed")
     }
 
     optionsGUI.Add("Text", , "")
+    optionsGUI.Add("Text", "ccfcfcf", "Season:")
+
+    If (EventItemID > 0 && EventItemID < 5) {
+        optionsGUI.Add("DropDownList", "vEventID Choose" EventItemID, [
+            "1 Winter",
+            "2 Easter",
+            "3 St Patricks Day",
+            "4 Halloween",
+            "5 Valentines"
+        ]).OnEvent("Change", ProcessUserEventItemsID)
+    } Else {
+        optionsGUI.Add("DropDownList", "vEventID Choose1", [
+            "1 Winter",
+            "2 Easter",
+            "3 St Patricks Day",
+            "4 Halloween",
+            "5 Valentines"
+        ]).OnEvent("Change", ProcessUserEventItemsID)
+    }
+
+    optionsGUI.Add("Text", , "")
     optionsGUI.Add("Text", "ccfcfcf", "Event store slot:")
-    if (EventItemStoreSlot = 1) {
-        optionsGUI.Add("Radio", "vStoreSlot ccfcfcf checked", "1 TopLeft")
-    } else {
-        optionsGUI.Add("Radio", "vStoreSlot ccfcfcf", "1 TopLeft")
+    Switch (EventItemID) {
+    Case 1:
+        If (EventItemStoreSlot > 0 && EventItemStoreSlot < 9) {
+            optionsGUI.Add("DropDownList", "vStoreSlot Choose" EventItemStoreSlot, [
+                "1 Top Left",
+                "2 Top Right",
+                "3 Left",
+                "4 Right",
+                "5 Lower Left",
+                "6 Lower Right",
+                "7 Bottom Left",
+                "8 Bottom Right"
+            ])
+        }
+    Case 2:
+        If (EventItemStoreSlot > 0 && EventItemStoreSlot < 9) {
+            optionsGUI.Add("DropDownList", "vStoreSlot Choose" EventItemStoreSlot, [
+                "1 Shell Sandles",
+                "2 Yolken Shield",
+                "3 Egg Head",
+                "4 Egg Armor",
+                "5 A Metal Egg (Don't use)"
+            ])
+        }
+    Case 3:
+        If (EventItemStoreSlot > 0 && EventItemStoreSlot < 9) {
+            optionsGUI.Add("DropDownList", "vStoreSlot Choose" EventItemStoreSlot, [
+                "1 Top Left",
+                "2 Top Right",
+                "3 Left",
+                "4 Right",
+                "5 Lower Left",
+                "6 Lower Right",
+                "7 Bottom Left",
+                "8 Bottom Right"
+            ])
+        }
+    Case 4:
+        If (EventItemStoreSlot > 0 && EventItemStoreSlot < 9) {
+            optionsGUI.Add("DropDownList", "vStoreSlot Choose" EventItemStoreSlot, [
+                "1 Top Left",
+                "2 Top Right",
+                "3 Left",
+                "4 Right",
+                "5 Lower Left",
+                "6 Lower Right",
+                "7 Bottom Left",
+                "8 Bottom Right"
+            ])
+        }
+    Case 5:
+        If (EventItemStoreSlot > 0 && EventItemStoreSlot < 9) {
+            optionsGUI.Add("DropDownList", "vStoreSlot Choose" EventItemStoreSlot, [
+                "1 Top Left",
+                "2 Top Right",
+                "3 Left",
+                "4 Right",
+                "5 Lower Left",
+                "6 Lower Right",
+                "7 Bottom Left",
+                "8 Bottom Right"
+            ])
+        }
+    default:
+        optionsGUI.Add("DropDownList", "vStoreSlot Choose1", [
+            "1 Top Left",
+            "2 Top Right",
+            "3 Left",
+            "4 Right",
+            "5 Lower Left",
+            "6 Lower Right",
+            "7 Bottom Left",
+            "8 Bottom Right"
+        ])
     }
-    if (EventItemStoreSlot = 2) {
-        optionsGUI.Add("Radio", "ccfcfcf checked", "2 TopRight")
-    } else {
-        optionsGUI.Add("Radio", "ccfcfcf", "2 TopRight")
-    }
-    if (EventItemStoreSlot = 3) {
-        optionsGUI.Add("Radio", "ccfcfcf checked", "3 Left")
-    } else {
-        optionsGUI.Add("Radio", "ccfcfcf", "3 Left")
-    }
-    if (EventItemStoreSlot = 4) {
-        optionsGUI.Add("Radio", "ccfcfcf checked", "4 Right")
-    } else {
-        optionsGUI.Add("Radio", "ccfcfcf", "4 Right")
-    }
-    if (EventItemStoreSlot = 5) {
-        optionsGUI.Add("Radio", "ccfcfcf checked", "5 LowerLeft")
-    } else {
-        optionsGUI.Add("Radio", "ccfcfcf", "5 LowerLeft")
-    }
-    if (EventItemStoreSlot = 6) {
-        optionsGUI.Add("Radio", "ccfcfcf checked", "6 LowerRight")
-    } else {
-        optionsGUI.Add("Radio", "ccfcfcf", "6 LowerRight")
-    }
-    if (EventItemStoreSlot = 7) {
-        optionsGUI.Add("Radio", "ccfcfcf checked", "7 BottomLeft")
-    } else {
-        optionsGUI.Add("Radio", "ccfcfcf", "7 BottomLeft")
-    }
-    if (EventItemStoreSlot = 8) {
-        optionsGUI.Add("Radio", "ccfcfcf checked", "8 BottomRight")
-    } else {
-        optionsGUI.Add("Radio", "ccfcfcf", "8 BottomRight")
+    If (EventItemID > 0 && EventItemID < 6 && !(EventItemStoreSlot > 0 && EventItemStoreSlot < 9)) {
+        optionsGUI.Add("DropDownList", "vStoreSlot Choose1", [
+            "1 Top Left",
+            "2 Top Right",
+            "3 Left",
+            "4 Right",
+            "5 Lower Left",
+            "6 Lower Right",
+            "7 Bottom Left",
+            "8 Bottom Right"
+        ])
     }
 
     optionsGUI.Add("Text", , "")
     optionsGUI.Add("Text", "ccfcfcf", "Item type:")
-    if (EventItemTypeArmour) {
+    If (EventItemTypeArmour) {
         optionsGUI.Add("Radio", "vItemType ccfcfcf", "Weapon")
         optionsGUI.Add("Radio", "ccfcfcf checked", "Armour")
-    } else {
+    } Else {
         optionsGUI.Add("Radio", "vItemType ccfcfcf checked", "Weapon")
         optionsGUI.Add("Radio", "ccfcfcf", "Armour")
     }
 
-    optionsGUI.Add("Button", "default", "OK").OnEvent("Click", ProcessUserEventItemsSettings)
-    ;    optionsGUI.OnEvent("Close", ProcessUserEventItemsSettings)
+    optionsGUI.Add("Button", "default", "Run and Save").OnEvent("Click", ProcessUserEventItemsSettings)
+    optionsGUI.Add("Button", "default yp", "Save").OnEvent("Click", UserEventItemsSave)
+    optionsGUI.Add("Button", "default yp", "Cancel").OnEvent("Click", UserEventItemsCancel)
+
     ProcessUserEventItemsSettings(*) {
+        UserEventItemsSave()
+        Window.Activate()
+        fEventItemReset()
+    }
+
+    ProcessUserEventItemsID(*) {
+        optionsGUI.Hide()
+        UserEventItemsSave()
+        Button_Click_EventItem()
+    }
+
+    UserEventItemsSave(*) {
         values := optionsGUI.Submit()
-        Log("Event Items: Amount " values.Amount " Good " values.IsGood
-            "`nPerf " values.IsPerfect " Socketed " values.IsSocketed
-            "`nStore " values.StoreSlot " Type " values.ItemType)
-        EventItemTypeArmour := values.ItemType--
+        EventItemTypeArmour := --values.ItemType
         EventItemAmount := values.Amount
         EventItemGood := values.IsGood
         EventItemPerfect := values.IsPerfect
         EventItemSocketed := values.IsSocketed
-        EventItemStoreSlot := values.StoreSlot
-        WinActivate(WW2WindowTitle)
-        fEventItemReset()
+        EventItemStoreSlot := StrSplit(values.StoreSlot, " ")[1]
+        EventItemID := StrSplit(values.EventID, " ")[1]
+        Out.I("Saved Event Items: Amount " EventItemAmount " Good " EventItemGood
+            " Perf " EventItemPerfect " Socketed " EventItemSocketed
+            " Store " EventItemStoreSlot " Armour " EventItemTypeArmour " EventID " EventItemID)
+        settings.SaveCurrentSettings()
+    }
+
+    UserEventItemsCancel(*) {
+        optionsGUI.Hide()
     }
     optionsGUI.Show("w300")
 }

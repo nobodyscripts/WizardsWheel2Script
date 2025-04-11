@@ -1,116 +1,21 @@
 #Requires AutoHotkey v2.0
 
+#Include Logging.ahk
+#Include cPoints.ahk
+#Include cRects.ahk
+#Include cToolTip.ahk
 ; ------------------- Functions -------------------
 
-; Convert positions from 1278*664 client resolution to current resolution
-WinRelPosW(PosW) {
-    global W
-    return PosW / 1278 * W
-}
-
-WinRelPosH(PosH) {
-    global H
-    return PosH / 664 * H
-}
-
-; Convert positions from 2560*1396 client resolution to current resolution to
-; allow higher accuracy
-WinRelPosLargeW(PosW2) {
-    global W
-    return PosW2 / 2560 * W
-}
-
-WinRelPosLargeH(PosH2) {
-    global H
-    return PosH2 / 1369 * H
-}
-
-
-; Default clicking function, uses relative locations
-fSlowClick(x, y, delay := 34) {
-    if (WinActive(WW2WindowTitle)) {
-        MouseClick("left", WinRelPosW(x), WinRelPosH(y), , , "D")
-        Sleep(delay) ; Must be higher than 16.67 which is a single frame of 60fps,
-        ; set to slightly higher than 2 frames for safety
-        ; If clicking isn't reliable increase this sleep value
-        MouseClick("left", WinRelPosW(x), WinRelPosH(y), , , "U")
+; Custom clicking function, uses given coords no relative correction
+fCustomClick(clickX, clickY, delay := 34) {
+    If (!Window.IsActive()) {
+        Out.I("No window found while trying to click at " clickX " * " clickY)
+        Return false
     }
-}
-
-; Custom clicking function, swap the above to this if you want static coords
-; that are more easily changed
-fCustomClick(x, y, delay := 34) {
-    if (WinActive(WW2WindowTitle)) {
-        MouseClick("left", x, y, , , "D")
-        Sleep(delay)
-        /* Must be higher than 16.67 which is a single frame of 60fps,
-        set to slightly higher than 2 frames for safety
-        If clicking isn't reliable increase this sleep value */
-        MouseClick("left", x, y, , , "U")
-    }
-}
-
-fSlowClickRelL(clickX, clickY, delay := 34) {
-    if (!WinActive(WW2WindowTitle)) {
-        Log("No window found while trying to Lclick at " clickX " * " clickY
-            "`n Rel: " WinRelPosLargeW(clickX) " * " WinRelPosLargeH(clickY))
-        return false
-    }
-    MouseClick("left", WinRelPosLargeW(clickX),
-        WinRelPosLargeH(clickY), , , "D")
+    MouseClick("left", clickX, clickY, , , "D")
     Sleep(delay)
-    MouseClick("left", WinRelPosLargeW(clickX),
-        WinRelPosLargeH(clickY), , , "U")
-}
-
-ResetModifierKeys() {
-    ; Cleanup incase still held, ahk cannot tell if the key has been sent as up
-    ; getkeystate reports the key, not what lbr has been given
-
-    ControlSend("{Control up}", , WW2WindowTitle)
-    ControlSend("{Alt up}", , WW2WindowTitle)
-    ControlSend("{Shift up}", , WW2WindowTitle)
-}
-
-PixelSearchWrapper(x1, y1, x2, y2, colour) {
-    try {
-        found := PixelSearch(&OutX, &OutY,
-            x1, y1,
-            x2, y2, colour, 0)
-        If (!found || OutX = 0) {
-            return false
-        }
-    } catch as exc {
-        Log("Error 8: PixelSearchWrapper check failed - " exc.Message)
-        MsgBox("Could not conduct the search due to the following error:`n"
-            exc.Message)
-    }
-    return [OutX, OutY]
-}
-
-/**
- * Search area for first instance of colour found from top left
- * @param x1 Top left Coordinate (relative 1440)
- * @param y1 Top left Coordinate (relative 1440)
- * @param x2 Bottom Right Coordinate (relative 1440)
- * @param y2 Bottom Right Coordinate (relative 1440)
- * @returns {array|number} returns array of [ x, y ] or false
- */
-PixelSearchWrapperRel(x1, y1, x2, y2, colour) {
-    /*try {
-        found := PixelSearch(&OutX, &OutY,
-            WinRelPosLargeW(x1), WinRelPosLargeH(y1),
-            WinRelPosLargeW(x2), WinRelPosLargeH(y2), colour, 0)
-        If (!found || OutX = 0) {
-            return false
-        }
-    } catch as exc {
-        Log("Error: PixelSearchWrapperRel check failed - " exc.Message)
-        MsgBox("Could not conduct the search due to the following error:`n"
-            exc.Message)
-    }*/
-    return PixelSearchWrapper(WinRelPosLargeW(x1), WinRelPosLargeH(y1),
-        WinRelPosLargeW(x2), WinRelPosLargeH(y2), colour)
+    MouseClick("left", clickX, clickY, , , "U")
+    Out.V("Clicking at " cPoint(clickX, clickY, false).toStringDisplay())
 }
 
 /**
@@ -127,40 +32,49 @@ LineGetColourInstances(x1, y1, x2, y2) {
     ; Detects when the colour changes to remove redundant entries
     foundArr := []
     lastColour := ""
-    try {
+    Try {
         ; if no width, and y has length
-        if (x1 = x2 && y1 < y2) {
+        If (x1 = x2 && y1 < y2) {
             ; Starting point
             i := y1
-            while (i <= y2) {
+            While (i <= y2) {
                 colour := PixelGetColor(x1, i)
-                if (foundArr.Length = 0 || lastColour != colour) {
-                    foundArr.Push({ x: x1, y: i, colour: colour })
+                If (foundArr.Length = 0 || lastColour != colour) {
+                    foundArr.Push({
+                        x: x1,
+                        y: i,
+                        colour: colour
+                    })
                     lastColour := colour
                 }
                 i++
             }
-            return foundArr
+            Return foundArr
         }
         ; if no height, and x has length
-        if (y1 = y2 && x1 < x2) {
+        If (y1 = y2 && x1 < x2) {
             ; Starting point
             i := x1
-            while (i <= x2) {
+            While (i <= x2) {
                 colour := PixelGetColor(i, y1)
-                if (foundArr.Length = 0 || foundArr[foundArr.Length].colour != colour) {
-                    foundArr.Push({ x: i, y: y1, colour: colour })
+                If (foundArr.Length = 0 || foundArr[foundArr.Length].colour !=
+                    colour) {
+                    foundArr.Push({
+                        x: i,
+                        y: y1,
+                        colour: colour
+                    })
                 }
                 i++
             }
-            return foundArr
+            Return foundArr
         }
-    } catch as exc {
-        Log("Error 9: LineGetColourInstances check failed - " exc.Message)
-        MsgBox("Could not conduct the search due to the following error:`n"
-            exc.Message)
+    } Catch As exc {
+        Out.I("Error 9: LineGetColourInstances check failed - " exc.Message)
+        MsgBox("Could not conduct the search due to the following error:`n" exc
+            .Message)
     }
-    return false
+    Return false
 }
 
 /**
@@ -179,151 +93,159 @@ LineGetColourInstancesOffsetV(x, y1, y2, colour, splitCount := 20) {
     found := 0
     ; Because checking every pixel takes 7 seconds, lets split up the line
     ; use pixelsearch and try to find a balance where we don't get overlap
-    while splitCur < splitCount {
+    While splitCur < splitCount {
         yTop := y1 + (splitCur * splitSize)
         yBot := y1 + ((splitCur + 1) * splitSize)
-        result := PixelSearchWrapperRel(x, yTop, x, yBot, colour)
-        if (result) {
+        result := cRect(x, yTop, x, yBot).PixelSearch(colour)
+        If (result) {
+            ; Out.D("Found in segment " splitCur " at " result[1] " by " result[2])
             found++
             foundArr.Push(result[2])
         }
         splitCur++
     }
-    if (found) {
-        return foundArr
+    If (found) {
+        Return foundArr
     }
-    return false
+    Return false
 }
 
-LineGetColourInstancesOffsetH(x1, y1, x2, y2, offset, colour) {
-    PixelSearchWrapper(x1, y1, x2, y2, colour)
-}
-
-/**
- * Logger, user disable possible, debugout regardless of setting to vscode.
- * Far more usable than outputting to tooltips or debugging using normal means
- * due to focus changing and hotkeys overwriting
- * @param logmessage 
- * @param {string} logfile Defaults to A_ScriptDir "\WizardsWheel2.log" but is 
- * overwritable
- */
-Log(logmessage, logfile := A_ScriptDir "\WizardsWheel2.log") {
-    static isWritingToLog := false
-    message := FormatTime(, 'MM/dd/yyyy hh:mm:ss:' A_MSec) ' - ' logmessage '`r`n'
-    OutputDebug(message)
-/*     if (!EnableLogging) {
-        return
-    } */
-    k := 0
-    try {
-        if (!isWritingToLog) {
-            isWritingToLog := true
-            Sleep(1)
-            FileAppend(message, logfile)
-            isWritingToLog := false
-
-        }
-    } catch as exc {
-        OutputDebug("LogError: Error writing to log - " exc.Message "`r`n")
-        ; MsgBox("Error writing to log:`n" exc.Message)
-        Sleep(1)
-        FileAppend(message, logfile)
-        Sleep(1)
-        FileAppend(FormatTime(, 'MM/dd/yyyy hh:mm:ss:' A_MSec) ' - '
-            "LogError: Error writing to log - " exc.Message '`r`n', logfile)
-    }
-}
-
-cReload() {
-    if (false) {
-        ExitApp()
-    }
+cReload(*) {
     Reload()
 }
 
-IsLBRScriptActive() {
-    if (WinExist("\LeafBlowerV3.ahk ahk_class AutoHotkey")) {
-        return true
+ReloadIfNoGame() {
+    If (!Window.Exist() || !Window.IsActive()) {
+        cReload() ; Kill if no game
+        Return
     }
-    return false
+}
+
+InitScriptHotKey() {
+    ReloadIfNoGame()
+}
+
+BinaryToStr(var) {
+    If (var) {
+        Return "true"
+    }
+    Return "false"
+}
+
+ArrToCommaDelimStr(var) {
+    output := ""
+    If (Type(var) = "String") {
+        If (var = "") {
+            Return false
+        }
+        Return var
+    }
+    If (var.Length > 1) {
+        For text in var {
+            If (output != "") {
+                output := output ", " text
+            } Else {
+                output := text
+            }
+        }
+        Return output
+    } Else {
+        Return false
+    }
+}
+
+CommaDelimStrToArr(var) {
+    Return StrSplit(var, " ", ",.")
+}
+
+IsLBRScriptActive() {
+    If (WinExist("\LeafBlowerV3.ahk ahk_class AutoHotkey")) {
+        Return true
+    }
+    Return false
 }
 
 IsRoundActive() {
-    colour := PixelGetColor(WinRelPosLargeW(2552), WinRelPosLargeH(364))
-    if (colour = "0x3B8D9E" || ; normal
+    colour := cPoint(,)
+    If (colour = "0x3B8D9E" || ; normal
         colour = "0x7E1084" || ; normal purple
         colour = "0x84ADCF") { ; Winter
-            return true
+        Return true
     }
-    if (false) {
-        Log("Round active false: " colour)
+    If (false) {
+        Out.I("Round active false: " colour)
     }
-    return false
+    Return false
 }
 
 IsGemBuffActive() {
     ;1074 274 1490 315
-    found := PixelSearch(&OutX, &OutY, WinRelPosLargeW(1074), WinRelPosLargeH(274),
-        WinRelPosLargeW(1490), WinRelPosLargeH(315), "0xFBFF00", 0)
-    if (found && OutX > 0) { ; Found yellow of buff
-        return true
+    found := cRect(, , ,)
+    ;found := PixelSearch(&OutX, &OutY, WinRelPosLargeW(1074), WinRelPosLargeH(274),
+    ;WinRelPosLargeW(1490), WinRelPosLargeH(315), "0xFBFF00", 0)
+    If (found && found[1] > 0) { ; Found yellow of buff
+        Return true
     }
-    found := PixelSearch(&OutX, &OutY, WinRelPosLargeW(1074), WinRelPosLargeH(274),
-        WinRelPosLargeW(1490), WinRelPosLargeH(315), "0xE3E580", 0)
-    if (found && OutX > 0) { ; Found yellow of buff
-        return true
+    found := cRect(, , ,)
+    ;found := PixelSearch(&OutX, &OutY, WinRelPosLargeW(1074), WinRelPosLargeH(274),
+    ;WinRelPosLargeW(1490), WinRelPosLargeH(315), "0xE3E580", 0)
+    If (found && found[1] > 0) { ; Found yellow of buff
+        Return true
     }
-    return false
+    Return false
 }
 
 IsJewelBuffActive() {
-    colour := PixelGetColor(WinRelPosLargeW(2377), WinRelPosLargeH(491))
-    if (colour = "0xFFFFFF" || colour = "0xE5E5FF") {
-        return true
+    colour := cPoint(,)
+    ; colour := PixelGetColor(WinRelPosLargeW(2377), WinRelPosLargeH(491))
+    If (colour = "0xFFFFFF" || colour = "0xE5E5FF") {
+        Return true
     }
-    Log("Jewel col " colour)
-    return false
+    Out.I("Jewel col " colour)
+    Return false
 }
 
 IsLevelDragonPike() {
-    colour := PixelGetColor(WinRelPosLargeW(2280), WinRelPosLargeH(20))
-    if (colour = "0xFFFFFF" || colour = "0xE5E5FF") {
-        return true
+    colour := cPoint(,)
+    ; colour := PixelGetColor(WinRelPosLargeW(2280), WinRelPosLargeH(20))
+    If (colour = "0xFFFFFF" || colour = "0xE5E5FF") {
+        Return true
     }
-    Log("Area Sample Col " colour)
-    return false
+    Out.I("Area Sample Col " colour)
+    Return false
 }
 
-global lastWizardColour := ""
+Global lastWizardColour := ""
 
 IsWizardSpotChanged() {
-    global lastWizardColour
-    colour := PixelGetColor(WinRelPosLargeW(2065), WinRelPosLargeH(1300))
-    if (colour != "0xFFFFFF" || colour != "0x000000") {
-        return false
+    Global lastWizardColour
+    colour := cPoint(,)
+    ; colour := PixelGetColor(WinRelPosLargeW(2065), WinRelPosLargeH(1300))
+    If (colour != "0xFFFFFF" || colour != "0x000000") {
+        Return false
     }
-    if (lastWizardColour = "") {
+    If (lastWizardColour = "") {
         lastWizardColour := colour
-        return false
+        Return false
     }
-    if (colour != lastWizardColour) {
+    If (colour != lastWizardColour) {
         lastWizardColour := colour
-        return true
+        Return true
     }
-    return false
+    Return false
 }
 
 BinToStr(var) {
-    if (var) {
-        return "true"
-    } else {
-        return "false"
+    If (var) {
+        Return "true"
+    } Else {
+        Return "false"
     }
 }
 
 IsBool(var) {
-    if(IsInteger(var) && (var = 0 || var = 1)) {
-        return true
+    If (IsInteger(var) && (var = 0 || var = 1)) {
+        Return true
     }
-    return false
+    Return false
 }
