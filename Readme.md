@@ -65,15 +65,22 @@ another quickly.
 
 ## Changes
 
-First push of the script modified to match style of LBR script.  
+Rebuild of event items farming.  
+Added enchantment farming, repeatedly enchants a single item (no others in inv),
+until it matches affixes (set in code currently for selected), or any elevated
+(for "Single Item Enchant"). Swaps set affixes for situations where the set one
+matches, blocking further enchants.
+
+Updated most library files with newer code from the LBR script, allowing much
+cleaner script functionality with checks and colour verification.
+Added colour similarity checks for overlay handling to hopefully reduce the
+cases where scripts break due to events/timelines.
 
 ## TODO
 
-Enchanting stop at X affix  
 Get auto timewarp working  
 Auto timewarp with selected timeline  
 Auto sell items via search  
-Log new colour overlays so they can be added to detection
 
 ## Known issues
 
