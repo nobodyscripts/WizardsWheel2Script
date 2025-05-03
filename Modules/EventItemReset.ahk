@@ -27,18 +27,7 @@ fEventItemReset() {
         Num := 1 ; Iterator
         starttime := A_Now
         Out.I("Started")
-        /** @type {cRect} */
-        var := cRect(190, 120, 816, 491)
-        If (var.ImageSearch(A_ScriptDir "\Images\QualityPerfect.png")) {
-            Out.D("perfect")
-        }
-        If (var.ImageSearch(A_ScriptDir "\Images\Quality9.png")) {
-            Out.D("9")
-        }
-        If (var.ImageSearch(A_ScriptDir "\Images\Quality09.png")) {
-            Out.D("09")
-        }
-        /* 
+
         EventItems().GetStartSave()
         If (Count = 1) {
             If (!EventItems().GetGoodItem(Num, starttime)) {
@@ -51,13 +40,15 @@ fEventItemReset() {
                     Break
                 }
                 Sleep(300)
-                EventItems().StoreGoodItem()
+                If (!EventItems().StoreGoodItem()) {
+                    Break
+                }
                 Sleep(300)
                 Count--
                 Num++
             }
             Reload()
-        } */
+        }
     } Else {
         Reload()
     }
@@ -508,9 +499,11 @@ Class EventItems {
             }
 
             If (Window.IsActive() && DetailsOpen) {
-                Sleep(72)
-                cPoint(1050, 624).MouseMove()
-                Sleep(200)
+                safepoint := cPoint(1050, 624)
+                safepoint.WaitWhileNotColour("0x1F1F1F")
+                Sleep(34)
+                safepoint.MouseMove()
+                Sleep(34)
 
                 Try {
                     /** @type {cRect} */
@@ -558,10 +551,32 @@ Class EventItems {
             If (!EventItemGood && !EventItemPerfect && !EventItemSocketed) {
                 Out.I("Found any? Set a requirement.")
             }
-            If (Window.IsActive()) {
-                Sleep(50)
-                cPoint(1015, 56, 72) ; Close item
-                Sleep(500)
+            If (Window.IsActive() && DetailsOpen) {
+                if(!this.CloseInventory()) {
+                    Out.I("Close inventory failed after opening socketed item details " this.pVillage.pClose.GetColour())
+                    return false
+                }
+                multiselectbutton.WaitWhileNotColour("0x3B9132", 200)
+                if(!this.CloseInventory()) {
+                    Out.I("Close inventory failed after opening socketed item " this.pVillage.pClose.GetColour())
+                    return false
+                }
+                if(!this.WaitForVillage()) {
+                    Out.I("Wait for village failed after closing item details " this.pVillage.pClose.GetColour())
+                    return false
+                }
+            }
+            
+            If (Window.IsActive() && !DetailsOpen) {
+                multiselectbutton.WaitWhileNotColour("0x3B9132", 200)
+                if(!this.CloseInventory()) {
+                    Out.I("Close inventory failed without opening item " this.pVillage.pClose.GetColour())
+                    return false
+                }
+                if(!this.WaitForVillage()) {
+                    Out.I("Wait for village failed without opening item " this.pVillage.pClose.GetColour())
+                    return false
+                }
             }
         }
         Return false
@@ -652,6 +667,8 @@ Class EventItems {
             Return false
         }
         Out.I("Closed Inventory")
+
+        this.WaitForVillage()
 
         If (!this.OpenOptions()) {
             Out.I("Failure at 13 Open Options")

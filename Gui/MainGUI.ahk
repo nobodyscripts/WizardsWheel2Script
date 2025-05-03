@@ -22,6 +22,19 @@ Button_Click_ActiveBattle(thisGui, info) {
     fActiveBattle()
 }
 
+Button_Click_EnchantItem(*) {
+    Window.Activate()
+    ItemEnchanter().EnchantItem()
+    Reload()
+}
+
+Button_Click_EnchantItemSelected(*) {
+    Window.Activate()
+    userarray := []
+    ItemEnchanter().EnchantItemSelected(userarray)
+    Reload()
+}
+
 RunGui() {
     MyGui := Gui(, "WW2 NobodyScript")
     MyGui.Opt("-SysMenu")
@@ -52,6 +65,14 @@ RunGui() {
     MyGui.Add("Text", "ccfcfcf", "F12")
     MyBtn := MyGui.Add("Button", "Default w120", "Resize Game")
     MyBtn.OnEvent("Click", Button_Click_Resize)
+
+    MyGui.Add("Text", "ccfcfcf", "")
+    MyBtn := MyGui.Add("Button", "Default w120", "Single Item Enchant")
+    MyBtn.OnEvent("Click", Button_Click_EnchantItem)
+
+    MyGui.Add("Text", "ccfcfcf", "")
+    MyBtn := MyGui.Add("Button", "Default w120", "Single Item Enchant Selected")
+    MyBtn.OnEvent("Click", Button_Click_EnchantItemSelected)
 
     MyGui.Show()
 }

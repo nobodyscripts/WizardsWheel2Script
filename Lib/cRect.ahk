@@ -181,10 +181,10 @@ Class cRect {
      * 
      * @param Filename 
      */
-    ImageSearch(Filename) {
+    ImageSearch(Filename, Transparent := "37636D") {
         found := ImageSearch(&OutX, &OutY,
             this.x1, this.y1,
-            this.x2, this.y2, "*150 *Trans37636D " Filename)
+            this.x2, this.y2, "*150 *Trans" Transparent " " Filename)
         If (found) {
             Return [
                 OutX,
