@@ -1,6 +1,7 @@
 #Requires AutoHotkey v2.0
 
-;S.AddSetting("TestSection", "TestVar", "true, array, test", "Array")
+S.AddSetting("Dimension", "SelectedHeroes", "1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0", "Array")
+S.AddSetting("Dimension", "DoOnce", false, "bool")
 
 /**
  * Dimension functions related to incrementing Dimensions
@@ -12,11 +13,12 @@ Class Dimension {
     /**
      * Increase dimensions farming start point
      */
-    PushDimensions(SelectedHeroes := "", DoOnce := false) {
+    PushDimensions() {
+        SelectedHeroes := S.Get("SelectedHeroes")
         If (SelectedHeroes := "") {
             SelectedHeroes := [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         }
-        If (DoOnce) {
+        If (S.Get("DoOnce")) {
             this.PushOnce(SelectedHeroes)
         } Else {
             Loop {

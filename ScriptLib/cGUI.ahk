@@ -3,18 +3,37 @@
 #Include cLogging.ahk
 #Include cSettings.ahk
 
+S.AddSetting("GUI", "GuiBGColour", "0c0018", "string")
+S.AddSetting("GUI", "GuiFontBold", false, "bool")
+S.AddSetting("GUI", "GuiFontColour", "cfcfcf", "string")
+S.AddSetting("GUI", "GuiFontItalic", false, "bool")
+S.AddSetting("GUI", "GuiFontName", "", "string")
+S.AddSetting("GUI", "GuiFontSize", 9, "int")
+S.AddSetting("GUI", "GuiFontStrike", false, "bool")
+S.AddSetting("GUI", "GuiFontUnderline", false, "bool")
+S.AddSetting("GUI", "GuiFontWeight", 4, "int")
+
 /**
  * cGui extends GUI Description
  * @module cGui extends GUI
- * @property {Type} property Desc
- * @method Name Desc
+ * @method ResetSettings
+ * @method ResetLogs
+ * @method ShowGUIPosition
+ * @method SaveGUIPositionOnMove
+ * @method SaveGUIPositionOnResize
+ * @method StorePos
+ * @method SetFontOptions
+ * @method MakeGUIResizableIfOversize
+ * @method OnWheel
+ * @method OnScroll
+ * @method OnResize
+ * @method UpdateScrollBars
  */
 Class cGui extends GUI {
 
     ;@region ResetSettings()
     ResetSettings(*) {
-        Global Out
-        Out := ""
+        Out.Disable()
         HasPressed := MsgBox("Remove all ini files? This resets all settings.",
             "Setting Reset?", "0x1 0x100 0x10")
         If (HasPressed = "OK") {
@@ -34,14 +53,13 @@ Class cGui extends GUI {
             MsgBox("Setting Reset Complete.`n" list)
             Reload()
         }
-        Out := cLog()
+        Out.Enable()
     }
     ;@endregion
 
     ;@region ResetLogs()
     ResetLogs(*) {
-        Global Out
-        Out := ""
+        Out.Disable()
         HasPressed := MsgBox("Remove all log files? This resets all logs.",
             "Log Reset?", "0x1 0x100 0x10")
         If (HasPressed = "OK") {
@@ -61,7 +79,7 @@ Class cGui extends GUI {
             MsgBox("Log Reset Complete`n" list)
             Reload()
         }
-        Out := cLog()
+        Out.Enable()
     }
     ;@endregion
 
@@ -69,15 +87,25 @@ Class cGui extends GUI {
     ShowGUIPosition() {
         SplitTitle := StrSplit(this.Title, " ")
         Title := this.Title
+        If (IsInteger(SplitTitle[SplitTitle.Length])) {
+            SplitTitle[SplitTitle.Length].Delete()
+            For , value in SplitTitle {
+                Title .= value " "
+            }
+            Title := Trim(Title)
+        }
+        S.AddSetting("GUIPosition", Title, "0,0", "string")
         Try {
             arr := S.IniToVar(Title, "GUIPosition")
         } Catch Error As OutputVar {
             If (OutputVar.Message = "The requested key, section or file was not found.") {
                 Out.I("No window position stored for " Title)
-                this.Show()
-                Return
+            } Else If (OutputVar.Message = "Item has no value.") {
+                Out.I("No window position stored for " Title)
+            } Else {
+                Out.E(OutputVar)
             }
-            Out.E(OutputVar)
+            this.Show()
             Return
         }
         coords := StrSplit(arr, ",", " ")
@@ -105,43 +133,21 @@ Class cGui extends GUI {
             }
             i++
         }
+        Out.I(this.Title " had to have position reset")
         this.Show()
     }
     ;@endregion
 
     ;@region SaveGUIPositionOnMove()
     SaveGUIPositionOnMove(Wparam, Lparam, Msg, Hwnd) {
-        ;Out.D("onmessage " Wparam " " Lparam " " Msg " " Hwnd)
-        ;thisGUI := GuiFromHwnd(Hwnd)
-        SetTimer(this.StorePos.Bind(this), -500)
+        thisGUI := GuiFromHwnd(Hwnd)
+        SetTimer(this.StoreGuiPos.Bind(this, thisGUI), -500)
     }
     ;@endregion
 
     ;@region SaveGUIPositionOnResize()
     SaveGUIPositionOnResize(thisGUI, MinMax, Width, Height) {
-        SetTimer(this.StorePos.Bind(this, true), -500)
-    }
-    ;@endregion
-
-    ;@region StorePos()
-    StorePos(resize := false) {
-        Static StorePosLock := false
-
-        If (Type(this) = "Gui" && !StorePosLock) {
-            StorePosLock := true
-            WinGetPos(&guiX, &guiY, &guiW, &guiH, this.Title)
-            Sleep(500)
-            If (WinExist(this.Title)) {
-                WinGetPos(&guiX, &guiY, &guiW, &guiH, this.Title)
-            }
-            SplitTitle := StrSplit(this.Title, " ")
-            Title := this.Title
-            If (SplitTitle[1] = "LBR") {
-                Title := SplitTitle[1] " " SplitTitle[2]
-            }
-            S.WriteToIni(Title, guiX "," guiY, "GUIPosition")
-            StorePosLock := false
-        }
+        SetTimer(this.StoreGuiPos.Bind(this, thisGUI, true), -500)
     }
     ;@endregion
 
@@ -179,6 +185,24 @@ Class cGui extends GUI {
         If (bgcol) {
             this.BackColor := bgcol
         }
+    }
+    ;@endregion
+
+    ;@region SetUserFontSettings()
+    /**
+     * Set default font and gui settings based on saved settings
+     */
+    SetUserFontSettings() {
+        bold := S.Get("GuiFontBold")
+        italic := S.Get("GuiFontItalic")
+        strike := S.Get("GuiFontStrike")
+        ul := S.Get("GuiFontUnderline")
+        col := S.Get("GuiFontColour")
+        size := S.Get("GuiFontSize")
+        weight := S.Get("GuiFontWeight")
+        name := S.Get("GuiFontName")
+        bgcol := S.Get("GuiBGColour")
+        this.SetFontOptions(bold, italic, strike, ul, col, size, weight, name, bgcol)
     }
     ;@endregion
 
@@ -293,6 +317,43 @@ Class cGui extends GUI {
         Y := (T < 0) && (B < GuiH) ? Min(Abs(T), GuiH - B) : 0
         If (X || Y)
             DllCall("ScrollWindow", "Ptr", GuiObj.Hwnd, "Int", X, "Int", Y, "Ptr", 0, "Ptr", 0)
+    }
+    ;@endregion
+
+    ;@region StorePos()
+    StoreGuiPos(gui, resize := false) {
+        Static StorePosLock := false
+        If ((Type(gui) = "Gui" || Type(gui) = "cGui") && !StorePosLock) {
+            If (gui.Title = A_ScriptName) {
+                Return
+            }
+            StorePosLock := true
+            If (WinExist(gui.Title)) {
+                WinGetPos(&guiX, &guiY, &guiW, &guiH, gui.Title)
+            } Else {
+                Return
+            }
+            Sleep(500)
+            If (WinExist(gui.Title)) {
+                WinGetPos(&guiX, &guiY, &guiW, &guiH, gui.Title)
+            }
+            SplitTitle := StrSplit(gui.Title, " ")
+            Title := gui.Title
+            If (IsInteger(SplitTitle[SplitTitle.Length])) {
+                SplitTitle[SplitTitle.Length].Delete()
+                For , value in SplitTitle {
+                    Title .= value " "
+                }
+                Title := Trim(Title)
+            }
+            If (!S.IsSetting(Title)) {
+                StorePosLock := false
+                Return
+            }
+            S.Set(Title, guiX "," guiY)
+            S.SaveCurrentSettings()
+            StorePosLock := false
+        }
     }
     ;@endregion
 

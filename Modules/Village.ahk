@@ -176,14 +176,14 @@ Class Village {
     /**
      * Description
      */
-    OpenEventStore() {
+    OpenEventStore(EventID) {
         If (Window.IsActive()) {
-            If (EventItemID = 1) {
+            If (EventID = 1) {
                 ; Winter
                 p := cPoint(915, 231)
                 p.ClickOffsetWhileColour(p.GetColour(), , 2, 2)
             }
-            If (EventItemID = 2) {
+            If (EventID = 2) {
                 ; Easter
                 p := cPoint(1060, 445)
                 p.ClickOffsetWhileColour(p.GetColour(), , 2, 2)
@@ -199,10 +199,9 @@ Class Village {
     /**
      * Description
      */
-    BuySelectedEventItem() {
-        Global EventItemID, EventItemStoreSlot
+    BuySelectedEventItem(EventID, EventItemStoreSlot) {
         If (Window.IsActive()) {
-            If (EventItemID = 1) {
+            If (EventID = 1) {
                 ; Winter
                 Switch EventItemStoreSlot {
                 Case 1:
@@ -221,7 +220,7 @@ Class Village {
                     cPoint(535, 250).Click(51) ; Buy row 1 l
                 }
             }
-            If (EventItemID = 2) {
+            If (EventID = 2) {
                 ; Easter
                 Switch EventItemStoreSlot {
                 Case 1:
@@ -238,7 +237,7 @@ Class Village {
                     cPoint(551, 250).Click(51) ; Buy row 1 l Shell sandles
                 }
             }
-            If (EventItemID = 3) {
+            If (EventID = 3) {
                 ; St Patricks
                 Switch EventItemStoreSlot {
                 Case 1:
@@ -255,7 +254,7 @@ Class Village {
                     cPoint(551, 250).Click(51) ; Buy row 1 l
                 }
             }
-            If (EventItemID = 4) {
+            If (EventID = 4) {
                 ; Halloween
                 Switch EventItemStoreSlot {
                 Case 1:
@@ -272,7 +271,7 @@ Class Village {
                     cPoint(551, 250).Click(51) ; Buy row 1 l
                 }
             }
-            If (EventItemID = 5) {
+            If (EventID = 5) {
                 ; Valentines
                 Switch EventItemStoreSlot {
                 Case 1:

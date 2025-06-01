@@ -71,7 +71,7 @@ fReload(*) {
 }
 
 Global ClipBoardInUseBlock := false
-#HotIf WinActive(Window.Title) and MouseIsOver(Window.Title) and Debug
+#HotIf WinActive(Window.Title) and MouseIsOver(Window.Title) and S.Get("DebugAll")
     ~LButton:: {
         screenx := screeny := windowx := windowy := clientx := clienty := 0
         CoordMode("Mouse", "Screen")

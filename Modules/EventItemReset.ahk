@@ -9,7 +9,7 @@ S.AddSetting("EventItem", "EventItemPerfect", true, "bool")
 S.AddSetting("EventItem", "EventItemSocketed", true, "bool")
 S.AddSetting("EventItem", "EventItemStoreSlot", 1, "int")
 S.AddSetting("EventItem", "EventItemTypeArmour", true, "bool")
-S.AddSetting("EventItem", "EventItemID", 1, "int")
+S.AddSetting("EventItem", "EventID", 1, "int")
 
 ; ID 1 winter
 ; ID 2 Easter
@@ -119,11 +119,11 @@ Class EventItems {
             Out.I("Error at WaitForVillage")
             Return false
         }
-        If (!this.V.OpenEventStore()) {
+        If (!this.V.OpenEventStore(S.Get("EventID"))) {
             Out.I("Error at OpenEventStore")
             Return false
         }
-        If (!this.V.BuySelectedItem()) {
+        If (!this.V.BuySelectedEventItem(S.Get("EventID"), S.Get("EventItemStoreSlot"))) {
             Out.I("Error at BuySelectedItem")
             Return false
         }
@@ -297,9 +297,9 @@ Class EventItems {
             "Stored " Num - 1 " correct items.`nFound " itemcount
             " Items`n" socketcount " of which sockets`n"
             ratio "% of socketed`nSeconds Taken " timediff
-            "`nRequire 90%: " BinToStr(EventItemGood)
-            "`nRequire 100%: " BinToStr(EventItemPerfect)
-            "`nRequire socketed: " BinToStr(EventItemSocketed))
+            "`nRequire 90%: " BinToStr(S.Get("EventItemGood"))
+            "`nRequire 100%: " BinToStr(S.Get("EventItemPerfect"))
+            "`nRequire socketed: " BinToStr(S.Get("EventItemSocketed")))
     }
     ;@endregion
 
