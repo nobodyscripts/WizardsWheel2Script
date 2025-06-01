@@ -1,6 +1,6 @@
 #Requires AutoHotkey v2.0
 
-#Include cHotkeys.ahk
+#Include ..\ScriptLib\cHotkeys.ahk
 
 ; ------------------- Keybinds -------------------
 
@@ -37,5 +37,5 @@ Scriptkeys.Hotkeys["EventItemReset"] := cHotkey("EventItemReset", Map("EN-US", "
     "EN-GB", "F10", "Other", "F10"), "Default")
 
 If (!IsSet(DisableScriptKeysInit)) {
-    Scriptkeys.initHotkeys(IsSecondary)
+    Scriptkeys.initHotkeys()
 }

@@ -1,5 +1,7 @@
 #Requires AutoHotkey v2.0
 
+#Include ..\ScriptLib\cLogging.ahk
+
 /**
  * Collection of static colours and functions to check if pixels are certain
  * things.

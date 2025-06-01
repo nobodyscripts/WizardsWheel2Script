@@ -1,5 +1,7 @@
 #Requires AutoHotkey v2.0
 
+;S.AddSetting("TestSection", "TestVar", "true, array, test", "Array")
+
 EquipIronChef() {
     loop (68) {
         colour := cPoint(950, 450).GetColour()

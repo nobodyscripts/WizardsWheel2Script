@@ -7,24 +7,26 @@
  * Main script file, run this to activate gui and hotkeys
  */
 
-; Applying these first incase self run functions in includes require them
-Global ScriptsLogFile := A_ScriptDir "\WizardsWheel2.Log"
-Global IsSecondary := false
+/** @type {cLog} */
+Out := cLog(A_ScriptDir "\WizardsWheel2.log", true, 3, false)
 
-#Include Lib\hGlobals.ahk
+/** @type {cGameWindow} */
+Window := cGameWindow("Wizard's Wheel 2 ahk_class UnityWndClass ahk_exe Wizard's Wheel 2.exe", 1278, 664)
 
 #Include Gui\MainGUI.ahk
 
-#Include Lib\ScriptSettings.ahk
-#Include Lib\Functions.ahk
-#Include Lib\Navigate.ahk
-#Include Lib\cGameWindow.ahk
+#Include ScriptLib\cGameWindow.ahk
+#Include ScriptLib\cLogging.ahk
+#Include ScriptLib\cSettings.ahk
+
 #Include Lib\cHotkeysInitScript.ahk
-#Include Lib\hModules.ahk
 
-#Include Lib\ScriptSettings.ahk
-
-#Include Gui\MainGUI.ahk
+#Include Modules\ActiveBattle.ahk
+#Include Modules\Dimension.ahk
+#Include Modules\EventItemReset.ahk
+#Include Modules\IronChef.ahk
+#Include Modules\ItemEnchanter.ahk
+#Include Modules\Village.ahk
 
 SendMode("Input") ; Support for vm
 ; Can be Input, Event, Play, InputThenPlay if Input doesn't work for you
@@ -32,15 +34,12 @@ SendMode("Input") ; Support for vm
 DetectHiddenWindows(true)
 Persistent() ; Prevent the script from exiting automatically.
 
-/** @type {cSettings} */
-Global settings := cSettings()
-
-If (!settings.initSettings()) {
+If (!S.initSettings()) {
     ; If the first load fails, it attempts to write a new config, this retrys
     ; loading after that first failure
     ; Hardcoding 2 attempts because a loop could continuously error
     Sleep(50)
-    If (!settings.initSettings()) {
+    If (!S.initSettings()) {
         MsgBox(
             "Script failed to load settings, script closing, try restarting.")
         ExitApp()
@@ -63,13 +62,17 @@ CreateScriptHotkeys() {
     Hotkey("*" Scriptkeys.GetHotkey("AutoClicker"), fAutoClicker)
     HotIfWinActive(Window.Title)
     Hotkey("*" Scriptkeys.GetHotkey("Exit"), ExitApp)
-    Hotkey("*" Scriptkeys.GetHotkey("Reload"), cReload)
+    Hotkey("*" Scriptkeys.GetHotkey("Reload"), fReload)
     Hotkey("*" Scriptkeys.GetHotkey("GameResize"), fGameResize)
 }
+
+fReload(*) {
+    Reload()
+}
+
 Global ClipBoardInUseBlock := false
 #HotIf WinActive(Window.Title) and MouseIsOver(Window.Title) and Debug
     ~LButton:: {
-        Global ClipBoardInUseBlock
         screenx := screeny := windowx := windowy := clientx := clienty := 0
         CoordMode("Mouse", "Screen")
         MouseGetPos(&screenx, &screeny)
@@ -79,16 +82,14 @@ Global ClipBoardInUseBlock := false
         MouseGetPos(&clientx, &clienty)
 
         Out.D(
-            "Screen:`t" screenx ", " screeny "`n"
+            ;"Screen:`t" screenx ", " screeny "`n"
             ;"Window:`t" windowx ", " windowy "`n"
-            "Client:`t" clientx ", " clienty "`n"
-            ;"`t`t`t   Screen Colour:`t#" SubStr(PixelGetColor(screenx, screeny),3)
-            "`t`t`t   Client Colour:`t#" SubStr(PixelGetColor(clientx, clienty), 3)
+            "Mouse1 click Client: " clientx ", " clienty " Color: #" SubStr(PixelGetColor(clientx, clienty), 3)
+            " - pos-1: " clientx - 1 ", " clienty - 1 " Color: #" SubStr(PixelGetColor(clientx - 1, clienty - 1), 3
+            )
             ;"Current zone colour: " Points.ZoneSample.GetColour()
         )
-        /* If (IsSet(ClipBoardInUseBlock) && !ClipBoardInUseBlock) {
-            A_Clipboard := "cPoint(" clientx ", " clienty ")"
-        } */
+        A_Clipboard := "cPoint(" clientx ", " clienty ")"
     }
 
     ~WheelDown:: {
@@ -123,7 +124,7 @@ fAutoClicker(*) {
         Sleep(17)
         MouseClick("left", , , , , "U")
         Sleep(17)
-        cReload()
+        Reload()
     }
 }
 
@@ -160,6 +161,11 @@ fMineStart(*) {
     }
 } */
 
-ExitFunc(ExitReason, ExitCode) {
-    Out.I("Script exiting. Due to " ExitReason ".")
+
+IsLBRScriptActive() {
+    If (WinExist("\LeafBlowerV3.ahk ahk_class AutoHotkey")) {
+        Return true
+    }
+    Return false
 }
+

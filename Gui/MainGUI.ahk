@@ -1,11 +1,12 @@
 #Requires AutoHotkey v2.0
 
+
 Button_Click_Exit(thisGui, info) {
     ExitApp()
 }
 
 Button_Click_Reload(thisGui, info) {
-    cReload()
+    Reload()
 }
 
 Button_Click_Resize(thisGui, info) {
@@ -19,7 +20,7 @@ Button_Click_IronChef(thisGui, info) {
 
 Button_Click_ActiveBattle(thisGui, info) {
     Window.Activate()
-    fActiveBattle()
+    ActiveBattle().Run()
 }
 
 Button_Click_EnchantItem(*) {
@@ -32,6 +33,13 @@ Button_Click_EnchantItemSelected(*) {
     Window.Activate()
     userarray := []
     ItemEnchanter().EnchantItemSelected(userarray)
+    Reload()
+}
+
+Button_Click_DimensionPushing(*) {
+    Window.Activate()
+    SelectedHeroes := [1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+    Dimension().PushDimensions(SelectedHeroes, false)
     Reload()
 }
 
@@ -55,6 +63,10 @@ RunGui() {
     MyGui.Add("Text", "ccfcfcf", "NumpadEnter")
     MyBtn := MyGui.Add("Button", "Default w120", "Battle Scripts")
     MyBtn.OnEvent("Click", Button_Click_ActiveBattle)
+
+    MyGui.Add("Text", "ccfcfcf", "")
+    MyBtn := MyGui.Add("Button", "Default w120", "Dimension Pushing")
+    MyBtn.OnEvent("Click", Button_Click_DimensionPushing)
 
     MyGui.Add("Text", "ccfcfcf", "F10")
     MyBtn := MyGui.Add("Button", "Default w120", "Event Items")
@@ -272,7 +284,7 @@ Button_Click_EventItem(*) {
         Out.I("Saved Event Items: Amount " EventItemAmount " Good " EventItemGood
             " Perf " EventItemPerfect " Socketed " EventItemSocketed
             " Store " EventItemStoreSlot " Armour " EventItemTypeArmour " EventID " EventItemID)
-        settings.SaveCurrentSettings()
+        S.SaveCurrentSettings()
     }
 
     UserEventItemsCancel(*) {

@@ -1,5 +1,7 @@
 #Requires AutoHotkey v2.0
 
+;S.AddSetting("TestSection", "TestVar", "true, array, test", "Array")
+
 Global HasOutputStartupString := false
 
 /**

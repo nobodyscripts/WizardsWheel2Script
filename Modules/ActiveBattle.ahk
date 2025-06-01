@@ -1,244 +1,334 @@
 #Requires AutoHotkey v2.0
 
-fActiveBattle() {
-    static toggle := true
-    if (toggle = false) {
-        ToolTip()
-    } else {
-        ToolTip("Active wheel clicking", 100, 80)
-        fWWClickWheel(true) ; Run as timer doesn't execute straight away
-        fWWClickSkills()
-        fWWClickMimics()
-    }
-    SetTimer(fWWClickWheel, 72 * (toggle))
-    SetTimer(fWWClickSkills, 50000 * (toggle))
-    SetTimer(fWWClickMimics, 72 * (toggle))
-    SetTimer(HasGemBuffExpired, 1000 * (toggle))
-    SetTimer(HasJewelBuffExpired, 1000 * (toggle))
-    SetTimer(HasWizardAppeared, 1000 * (toggle))
+#Include ..\ScriptLib\cPoint.ahk
+#Include ..\ScriptLib\cRect.ahk
 
-    toggle := !toggle
-}
+;S.AddSetting("TestSection", "TestVar", "true, array, test", "Array")
 
-fWWClickWheel(spamTen := false) {
-    ;2392 1272 (1440)
-    If (!Window.Activate()) {
-        MsgBox("Wizard's Wheel 2: Window not found")
-        Reload()
-        return ; Kill the loop if the window closes
-    }
-    if (!IsRoundActive()) {
-        return
-    }
-    if (Window.IsActive()) {
-        ToolTip("Wheel check", 100, 100, 2)
-        If (spamTen = false) {
-            HasWheelSlowed()
-            return
+/**
+ * ActiveBattle functions for during combat and checking combat state
+ * @module ActiveBattle
+ */
+Class ActiveBattle {
+    /** @type {Bool} */
+    CanUseJewelBoost := false
+    /** @type {Bool} */
+    CanUseGemBoost := false
+    /** @type {cPoint} */
+    AreaSample := cPoint(,)
+    /** @type {cPoint} */
+    JewelBuffCheck := cPoint(,)
+    /** @type {cPoint} */
+    GemBuffCheck := cPoint(,)
+    /** @type {cPoint} */
+    SpeedBoostWheel := cPoint(,)
+    /** @type {cPoint} */
+    WizardCheck := cPoint(,)
+    /** @type {cPoint} */
+    Skill1 := cPoint(,)
+    /** @type {cPoint} */
+    Skill2 := cPoint(,)
+    /** @type {cPoint} */
+    Skill3 := cPoint(,)
+    /** @type {cRect} */
+    SpeedBoostWheelCheck := cRect(, , ,)
+    /** @type {cRect} */
+    MimicArea := cRect(, , ,)
+
+    ;@region Run()
+    /**
+     * Activate all enabled maintainers for mid combat
+     */
+    Run() {
+        Static toggle := true
+        If (toggle) {
+            this.MaintainWheel(true) ; Run as timer doesn't execute straight away
+            this.MaintainSkills()
+            this.MaintainMimics()
         }
-        Loop 15 {
-            cPoint(1204, 630).Click()
-            Sleep(34)
-        }
+        SetTimer(this.MaintainWheel, 72 * (toggle))
+        SetTimer(this.MaintainSkills, 72 * (toggle))
+        SetTimer(this.MaintainMimics, 72 * (toggle))
+        SetTimer(this.RefreshGemBoost, 72 * (toggle))
+        SetTimer(this.RefreshJewelBoost, 72 * (toggle))
+        SetTimer(this.MaintainWizard, 72 * (toggle))
+
+        toggle := !toggle
     }
-}
+    ;@endregion
 
-HasWheelSlowed() {
-    OutX := 0
-    OutY := 0
-    try {
-        X1 := "" ; WinRelPosLargeW(2300)
-        Y1 := "" ; WinRelPosLargeH(1150)
-        X2 := "" ; WinRelPosLargeW(2480)
-        Y2 := "" ; WinRelPosLargeH(1220)
+    ;@region IsRoundActive()
+    /**
+     * Is the round active
+     * @returns {Boolean} 
+     */
+    IsRoundActive() {
+        LeftBarColour := cPoint(1, 164).GetColour()
+        TopBarColour := cPoint(634, 5).GetColour()
+        RightBarColour := cPoint(1274, 206).GetColour()
+        If (LeftBarColour = TopBarColour && RightBarColour = TopBarColour) {
+            Return true
+        }
+        Out.I("Round active false: " LeftBarColour)
+        Return false
+    }
+    ;@endregion
 
-        if (Window.IsActive()) {
-            found := PixelSearch(&OutX, &OutY, X1, Y1, X2, Y2, "0xFFFFFF", 0)
-            If (found and OutX != 0) {
-                fCustomClick(OutX, OutY)
-                Sleep(34)
-                fCustomClick(OutX, OutY)
-                Sleep(34)
-                fCustomClick(OutX, OutY)
-                Sleep(1000)
+    ;@region HasWheelSlowed()
+    /**
+     * Has speed boost wheel reduced in speed from max
+     */
+    HasWheelSlowed() {
+        If (Window.IsActive()) {
+            found := this.SpeedBoostWheelCheck.PixelSearch()
+            If (found and found[1] != 0) {
+                Return true
             }
         }
-
         ; Halloween filter
-        if (Window.IsActive()) {
-            found := PixelSearch(&OutX, &OutY, X1, Y1, X2, Y2, "0x9F9FE5", 0)
-            If (found and OutX != 0) {
-                fCustomClick(OutX, OutY)
-                Sleep(34)
-                fCustomClick(OutX, OutY)
-                Sleep(34)
-                fCustomClick(OutX, OutY)
-                Sleep(1000)
+        If (Window.IsActive()) {
+            found := this.SpeedBoostWheelCheck.PixelSearch("0x9F9FE5")
+            If (found and found[1] != 0) {
+                Return true
             }
         }
-
         ; Winter filter
-        if (Window.IsActive()) {
-            found := PixelSearch(&OutX, &OutY, X1, Y1, X2, Y2, "0xE5E5FF", 0)
-            If (found and OutX != 0) {
-                fCustomClick(OutX, OutY)
-                Sleep(34)
-                fCustomClick(OutX, OutY)
-                Sleep(34)
-                fCustomClick(OutX, OutY)
-                Sleep(1000)
+        If (Window.IsActive()) {
+            found := this.SpeedBoostWheelCheck.PixelSearch("0xE5E5FF")
+            If (found and found[1] != 0) {
+                Return true
             }
         }
-    } catch as exc {
-        MsgBox("Could not conduct the search due to the following error:`n"
-            exc.Message)
-        return
+        Return false
     }
-}
+    ;@endregion
 
-fWWClickSkills() {
-    if (!Window.Exist()) {
-        MsgBox("Wizard's Wheel 2: Window not found")
-        Reload()
-        return ; Kill the loop if the window closes
+    ;@region IsWizardChanged()
+    /**
+     * Has wizard appearance changed
+     */
+    IsWizardChanged() {
+        Static lastWizardColour := ""
+        colour := this.WizardCheck.GetColour()
+        If (colour != "0xFFFFFF" || colour != "0x000000") {
+            Return false
+        }
+        If (lastWizardColour = "") {
+            lastWizardColour := colour
+            Return false
+        }
+        If (colour != lastWizardColour) {
+            lastWizardColour := colour
+            Return true
+        }
+        Return false
     }
-    Window.Activate()
-    if (!IsRoundActive()) {
-        return
-    }
-    if (Window.IsActive()) {
-        ToolTip("Skill check", 100, 120, 3)
-        cPoint(1125, 460, 51).Click() ; (skill 1, left)
-        cPoint(1125, 460, 51).Click() ; (skill 1, left)
-        Sleep(51)
-        cPoint(1180, 460, 51).Click() ; (skill 2, center)
-        cPoint(1180, 460, 51).Click() ; (skill 2, center)
-        Sleep(51)
-        cPoint(1250, 460, 51).Click() ; (skill 3, right)
-        cPoint(1250, 460, 51).Click() ; (skill 3, right)
-    }
-}
+    ;@endregion
 
-fWWClickMimics() {
-    ; tongue colour e86a73
-    ; 520 320 (1440)
-    ; 2070 840 br corner
-
-    if (!Window.Exist()) {
-        MsgBox("Wizard's Wheel 2: Window not found")
-        Reload()
-        return ; Kill the loop if the window closes
+    ;@region IsLevelDragonPike()
+    /**
+     * Is current level Dragon Pike
+     */
+    IsLevelDragonPike() {
+        colour := this.AreaSample.GetColour()
+        If (colour = "0xFFFFFF" || colour = "0xE5E5FF") {
+            Return true
+        }
+        Out.I("Area Sample Col " colour)
+        Return false
     }
-    Window.Activate()
-    if (!IsRoundActive()) {
-        return
-    }
-    ToolTip("Mimic check", 100, 140, 4)
-    OutX := 0
-    OutY := 0
-    try {
-        X1 := "" ; WinRelPosLargeW(520)
-        Y1 := "" ; WinRelPosLargeH(320)
-        X2 := "" ; WinRelPosLargeW(2070)
-        Y2 := "" ; WinRelPosLargeH(840)
+    ;@endregion
 
-        if (Window.IsActive()) {
-            found := PixelSearch(&OutX, &OutY, X1, Y1, X2, Y2, "0xE86A73", 0)
-            If (found and OutX != 0) {
-                fCustomClick(OutX, OutY)
-                Sleep(200)
-                return
+    ;@region IsJewelBuffActive()
+    /**
+     * Description
+     */
+    IsJewelBuffActive() {
+        colour := this.JewelBuffCheck.GetColour()
+        If (colour = "0xFFFFFF" || colour = "0xE5E5FF") {
+            Return true
+        }
+        Out.I("Jewel col " colour)
+        Return false
+    }
+    ;@endregion
+
+    ;@region IsGemBuffActive()
+    /**
+     * Description
+     */
+    IsGemBuffActive() {
+        colour := this.GemBuffCheck.GetColour()
+        If (colour = "0xFFFFFF" || colour = "0xE5E5FF") {
+            Return true
+        }
+        Out.I("Gem col " colour)
+        Return false
+    }
+    ;@endregion
+    /*
+    IsGemBuffActive() {
+        ; Search for yellow text for active buff
+        ; Search for FBFF00
+        found := cRect(1074, 274, 1490, 315)
+        found.PixelSearch("0xFBFF00")
+        If (found && found[1] > 0) {
+            Return true
+        }
+        ; Search for E3E580
+        found := cRect(1074, 274, 1490, 315)
+        found.PixelSearch("0xE3E580")
+        If (found && found[1] > 0) {
+            Return true
+        }
+        Return false
+    } */
+
+    ;@region UseGemBoost()
+    /**
+     * Purchase gem boost (3 gem icon)
+     */
+    UseGemBoost() {
+        If (this.CanUseGemBoost) {
+            SoundBeep()
+        }
+    }
+    ;@endregion
+
+    ;@region UseJewelBoost()
+    /**
+     * Use an available jewel boost
+     */
+    UseJewelBoost() {
+        If (this.CanUseJewelBoost) {
+            SoundBeep()
+        }
+    }
+    ;@endregion
+
+    ;@region RefreshJewelBoost()
+    /**
+     * Description
+     */
+    RefreshJewelBoost() {
+        If (!this.IsJewelBuffActive() && this.IsRoundActive()) {
+            this.UseJewelBoost()
+        }
+    }
+    ;@endregion
+
+    ;@region RefreshGemBoost()
+    /**
+     * Description
+     */
+    RefreshGemBoost() {
+        If (!this.IsGemBuffActive() && this.IsRoundActive()) {
+            this.UseGemBoost()
+        }
+    }
+    ;@endregion
+
+    MaintainWheel(spamTen := false) {
+        ;2392 1272 (1440)
+        If (!Window.Activate()) {
+            MsgBox("Wizard's Wheel 2: Window not found")
+            Reload()
+            Return ; Kill the loop if the window closes
+        }
+        If (!this.IsRoundActive()) {
+            Return
+        }
+        If (Window.IsActive()) {
+            If (spamTen = false) {
+                If (this.HasWheelSlowed()) {
+                    this.SpeedBoostWheel.ClickOffset()
+                    this.SpeedBoostWheel.ClickOffset()
+                    this.SpeedBoostWheel.ClickOffset()
+                }
+                Return
+            }
+            Loop 15 {
+                this.SpeedBoostWheel.ClickOffset()
+            }
+        }
+    }
+
+    ;@region MaintainSkills()
+    /**
+     * Click skills when they are off cooldown during a battle
+     */
+    MaintainSkills() {
+        If (!Window.Exist()) {
+            MsgBox("Wizard's Wheel 2: Window not found")
+            Reload()
+            Return ; Kill the loop if the window closes
+        }
+        Window.Activate()
+        If (!this.IsRoundActive()) {
+            Return
+        }
+        If (Window.IsActive()) {
+            this.Skill1.Click() ; (skill 1, left)
+            this.Skill1.Click() ; (skill 1, left)
+            Sleep(51)
+            this.Skill2.Click() ; (skill 2, center)
+            this.Skill2.Click() ; (skill 2, center)
+            Sleep(51)
+            this.Skill3.Click() ; (skill 3, right)
+            this.Skill3.Click() ; (skill 3, right)
+        }
+    }
+    ;@endregion
+
+    ;@region MaintainMimics()
+    /**
+     * Click Mimics when they appear during a battle
+     */
+    MaintainMimics() {
+        ; tongue colour e86a73
+        If (!Window.Exist()) {
+            MsgBox("Wizard's Wheel 2: Window not found")
+            Reload()
+            Return ; Kill the loop if the window closes
+        }
+        Window.Activate()
+        If (!this.IsRoundActive()) {
+            Return
+        }
+        If (Window.IsActive()) {
+            found := this.MimicArea.PixelSearch("0xE86A73")
+            If (found and found[1] != 0) {
+                fCustomClick(found[1], found[2])
+                Return
             }
         }
         ; Halloween version
-        if (Window.IsActive()) {
-            found := PixelSearch(&OutX, &OutY, X1, Y1, X2, Y2, "0x88569A", 0)
-            If (found and OutX != 0) {
-                fCustomClick(OutX, OutY)
-                Sleep(200)
-                return
+        If (Window.IsActive()) {
+            found := this.MimicArea.PixelSearch("0x88569A")
+            If (found and found[1] != 0) {
+                fCustomClick(found[1], found[2])
+                Return
             }
         }
         ; Winter version
-        if (Window.IsActive()) {
-            found := PixelSearch(&OutX, &OutY, X1, Y1, X2, Y2, "0xE1B6CB", 0)
-            If (found and OutX != 0) {
-                fCustomClick(OutX, OutY)
-                Sleep(200)
-                return
+        If (Window.IsActive()) {
+            found := this.MimicArea.PixelSearch("0xE1B6CB")
+            If (found and found[1] != 0) {
+                fCustomClick(found[1], found[2])
+                Return
             }
         }
-    } catch as exc {
-        MsgBox("Could not conduct the search due to the following error:`n"
-            exc.Message)
-        return
     }
-}
+    ;@endregion
 
-global GemBuffPingCount := 0
-HasGemBuffExpired() {
-    global GemBuffPingCount
-    if (!IsGemBuffActive() && IsRoundActive()) {
-        if (GemBuffPingCount < 5) {
-            SoundBeep()
+    ;@region MaintainWizard()
+    /**
+     * Click wizard if it appears
+     */
+    MaintainWizard() {
+        If (this.IsWizardChanged()) {
+            this.WizardCheck.ClickOffset()
         }
-        ; ToolTip("Gem Buff Expired", Window.W / 2, WinRelPosLargeH(50), 8)
-        GemBuffPingCount++
     }
-    if (IsGemBuffActive()) {
-        GemBuffPingCount := 0
-        ToolTip(, , , 8)
-    }
-}
-
-global JewelBuffPingCount := 0
-HasJewelBuffExpired() {
-    global JewelBuffPingCount
-    if (!IsJewelBuffActive() && IsRoundActive()) {
-        if (JewelBuffPingCount < 5) {
-            SoundBeep()
-        }
-        ; ToolTip("Jewel Buff Expired", W / 1.5, WinRelPosLargeH(50), 7)
-        JewelBuffPingCount++
-    }
-    if (IsJewelBuffActive()) {
-        JewelBuffPingCount := 0
-        ToolTip(, , , 7)
-    }
-}
-
-HasWizardAppeared() {
-    if (IsRoundActive() && IsWizardSpotChanged()) {
-        cPoint(, ).Click()
-        ;fSlowClickRelL(2066, 1305)
-    }
-}
-
-HasGameReachedDragonsPike() {
-    if (IsRoundActive() && IsLevelDragonPike()) {
-        cPoint(, ).Click()
-        ;fSlowClickRelL(2400, 155)
-        Sleep(51)
-        cPoint(, ).Click()
-        ;fSlowClickRelL(2400, 155)
-        Sleep(51)
-        cPoint(, ).Click()
-        ;fSlowClickRelL(2400, 155)
-        Sleep(51)
-        cPoint(, ).Click()
-        ;fSlowClickRelL(2400, 155)
-        Sleep(51)
-        ;MouseClickDrag("L", WinRelPosLargeW(1400), 1340, WinRelPosLargeW(1400), 250)
-        Sleep(51)
-        cPoint(, ).Click()
-        ;fSlowClickRelL(2220, 600)
-    }
-}
-
-fWWBuyGemBoost() {
-
-}
-
-fWWUseJewelBoost() {
-
+    ;@endregion
 }
