@@ -64,6 +64,11 @@ CreateScriptHotkeys() {
     Hotkey("*" Scriptkeys.GetHotkey("Exit"), ExitApp)
     Hotkey("*" Scriptkeys.GetHotkey("Reload"), fReload)
     Hotkey("*" Scriptkeys.GetHotkey("GameResize"), fGameResize)
+    Hotkey("*" Scriptkeys.GetHotkey("ActiveBattle"), fActiveBattle)
+    Hotkey("*" Scriptkeys.GetHotkey("EventItemReset"), fEventItemReset)
+    Hotkey("*" Scriptkeys.GetHotkey("IronChef"), fIronChef)
+    Hotkey("*" Scriptkeys.GetHotkey("ItemEnchant"), ItemEnchanterElevated)
+    Hotkey("*" Scriptkeys.GetHotkey("DimensionPushing"), fDimensionPushing)
 }
 
 fReload(*) {

@@ -3,6 +3,16 @@
 S.AddSetting("Dimension", "SelectedHeroes", "1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0", "Array")
 S.AddSetting("Dimension", "DoOnce", false, "bool")
 
+;@region fDimensionPushing()
+/**
+ * Description
+ */
+fDimensionPushing(*) {
+    Window.Activate()
+    Dimension().PushDimensions(, false)
+}
+;@endregion
+
 /**
  * Dimension functions related to incrementing Dimensions
  * @module Dimension

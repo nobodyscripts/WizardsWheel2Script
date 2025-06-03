@@ -17,9 +17,9 @@ S.AddSetting("EventItem", "EventID", 1, "int")
 ; ID 4 Halloween
 ; ID 5 Valentines
 
-fEventItemReset() {
+fEventItemReset(*) {
     Static on10 := False
-    Out.I("F10: Pressed")
+    Out.I(Scriptkeys.GetHotkey("EventItemReset") ": Pressed")
     Window.Activate()
     EventItemAmount := S.Get("EventItemAmount")
     If (!IsInteger(EventItemAmount)) {
@@ -203,13 +203,13 @@ Class EventItems {
             Try {
                 /** @type {cRect} */
                 var := cRect(190, 120, 816, 491)
-                If (var.ImageSearch(A_ScriptDir "\Images\QualityPerfect.png")) {
+                If (var.ImageSearch(A_ScriptDir "\Images\QualityPerfect.png", "37636d")) {
                     isPerfect := true
                 }
-                If (var.ImageSearch(A_ScriptDir "\Images\Quality9.png")) {
+                If (var.ImageSearch(A_ScriptDir "\Images\Quality9.png", "37636d")) {
                     isGood := true
                 }
-                If (var.ImageSearch(A_ScriptDir "\Images\Quality09.png")) {
+                If (var.ImageSearch(A_ScriptDir "\Images\Quality09.png", "37636d")) {
                     isGood := true
                 }
             } Catch As exc {

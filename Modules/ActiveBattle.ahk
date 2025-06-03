@@ -5,6 +5,12 @@
 
 ;S.AddSetting("TestSection", "TestVar", "true, array, test", "Array")
 
+
+fActiveBattle(*) {
+    Window.Activate()
+    ActiveBattle().Run()
+}
+
 /**
  * ActiveBattle functions for during combat and checking combat state
  * @module ActiveBattle

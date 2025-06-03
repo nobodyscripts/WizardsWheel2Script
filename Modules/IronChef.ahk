@@ -2,6 +2,11 @@
 
 ;S.AddSetting("TestSection", "TestVar", "true, array, test", "Array")
 
+fIronChef(*) {
+    Window.Activate()
+    EquipIronChef()
+}
+
 EquipIronChef() {
     loop (68) {
         colour := cPoint(950, 450).GetColour()

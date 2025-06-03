@@ -1,6 +1,7 @@
 #Requires AutoHotkey v2.0
 
 ;S.AddSetting("TestSection", "TestVar", "true, array, test", "Array")
+S.AddSetting("ItemEnchant", "ItemEnchantSelectedAffixes", "", "Array")
 
 Global HasOutputStartupString := false
 
@@ -11,41 +12,84 @@ Global HasOutputStartupString := false
  * @method Name Desc
  */
 Class ItemEnchanter {
-    /** @type {Type} Desc */
-    property := 0
-
-    /** @type {Affixes} Desc */
+    /** @type {Affixes} */
     Affixes := Affixes()
+
+    /** "Item is enchanted" pixel check FFFFFF
+     * @type {cPoint} */
+    Enchanted := cPoint(590, 150)
+    /** Sample of primary item background area, to check if colour vanishes when
+     * resetting dropdowns on start
+     *  @type {cPoint} */
+    ItemSample := cPoint(618, 263)
+    /** @type {cRect} */
+    leftDropDown := cRect(516, 504, 688, 538)
+    /** @type {cRect} */
+    rightDropDown := cRect(758, 506, 930, 535)
 
     ;@region EnchantItem()
     /**
      * Enchant a single item in the enchanter
      */
     EnchantItem() {
+        this.ResetDropdownsOnStart()
         Loop {
             If (this.ScanItem()) {
                 Break
             }
+            this.ItemEnchantReset()
             cPoint(400, 305).ClickOffset()
-            Sleep(17)
+            Sleep(100)
         }
         MsgBox("Done")
     }
     ;@endregion
 
-    ;@region EnchantItem()
+    ;@region EnchantItemSelected()
     /**
      * Enchant a single item in the enchanter
      */
-    EnchantItemSelected(arr) {
+    EnchantItemSelected() {
+        this.ResetDropdownsOnStart()
+        arr := S.Get("ItemEnchantSelectedAffixes")
+
         Loop {
             If (this.ScanSelectedAffixes(arr)) {
                 Break
             }
+            this.ItemEnchantReset()
             cPoint(400, 305).ClickOffset()
-            Sleep(51)
+            Sleep(100)
         }
         MsgBox("Done")
+    }
+    ;@endregion
+
+    ;@region ResetDropdownsOnStart()
+    /**
+     * Description
+     */
+    ResetDropdownsOnStart() {
+        If (!this.leftDropDown.PixelSearch("000000")) {
+            this.EternalReset()
+        }
+        If (!this.rightDropDown.PixelSearch("000000")) {
+            Sample := this.ItemSample.GetColour()
+            this.EternalAidReset()
+            If (Sample != this.ItemSample.GetColour()) {
+                this.EternalBlazingReset()
+            }
+        }
+        If (!this.leftDropDown.PixelSearch("000000")) {
+            Return false
+        }
+        If (Sample != this.ItemSample.GetColour()) {
+            Return false
+        }
+        If (!this.rightDropDown.PixelSearch("000000")) {
+            Return false
+        }
+        Return true
     }
     ;@endregion
 
@@ -147,6 +191,42 @@ Class ItemEnchanter {
     }
     ;@endregion
 
+    ItemEnchantReset() {
+        If (this.Enchanted.IsColour("0xFFFFFF")) {
+            Out.I("Is enchanted")
+        } Else {
+            Return true
+        }
+        Sample := this.ItemSample.GetColour()
+        this.EternalAidReset()
+        If (Sample != this.ItemSample.GetColour()) {
+            this.EternalBlazingReset()
+        }
+
+        If (!this.leftDropDown.PixelSearch("000000")) {
+            Return false
+        }
+        If (Sample != this.ItemSample.GetColour()) {
+            Return false
+        }
+        If (!this.rightDropDown.PixelSearch("000000")) {
+            Return false
+        }
+        Return true
+    }
+
+    ;@region EternalReset()
+    /**
+     * Reset enchant if Eternal not detected on start
+     */
+    EternalReset() {
+        cPoint(623, 523).Click() ; first dropdown
+        Sleep(200)
+        cPoint(615, 542).Click() ; eternal
+        Sleep(200)
+    }
+    ;@endregion
+
     ;@region EternalBlazingReset()
     /**
      * Reset enchant if Eternal + Blazing detected
@@ -187,36 +267,34 @@ Class ItemEnchanter {
     /**
      * Scan for an array of preselected affixes and ignore all else
      */
-    ScanSelectedAffixes(Array) {
+    ScanSelectedAffixes(arr := []) {
         Global HasOutputStartupString
-        Array := [
-            "Haste",
-            "Spelunkers",
-            "Preeminence",
-            "HumanShifting",
-            "Shifting"
-        ]
+
+        If (Type(arr) != "Array" || arr = []) {
+            Out.I("No affix selected, aborting.")
+            Return false
+        }
+
         isNormPrefix := false
         isNormSuffix := false
         isEternal := false
         isAid := false
         isBlazing := false
         If (!HasOutputStartupString) {
-            Out.I("Searching for selected affixes: " ArrToCommaDelimStr(Array))
+            Out.I("Searching for selected affixes: " ArrToCommaDelimStr(arr))
             HasOutputStartupString := true
         }
 
         singleitem := cRect(263, 256, 626, 310)
 
         ; If 'shifting' special case
-        If (ArrayHas("Shifting", Array) && this.Affixes.Special.Item[2].IsAffix(singleitem)) {
+        If (ArrayHas("Shifting", arr) && this.Affixes.Special.Item[2].IsAffix(singleitem)) {
             MsgBox("Matched on Shifting")
             Return true
-
         }
 
         For (id, value IN this.Affixes.Elevated.Prefixes) {
-            If (ArrayHas(value.Name, Array)) {
+            If (ArrayHas(value.Name, arr)) {
                 If (value.IsAffix(singleitem)) {
                     MsgBox("Matched on " value.Name)
                     Return true
@@ -224,7 +302,7 @@ Class ItemEnchanter {
             }
         }
         For (id, value IN this.Affixes.Elevated.Suffixes) {
-            If (ArrayHas(value.Name, Array)) {
+            If (ArrayHas(value.Name, arr)) {
                 If (value.Name = "Necromancer") {
                     If (value.IsAffix(singleitem) && !this.Affixes.Special.Item[1].IsAffix(singleitem)) {
                         MsgBox("Matched on " value.Name)
@@ -239,7 +317,7 @@ Class ItemEnchanter {
             }
         }
         For (id, value IN this.Affixes.Norm.Prefixes) {
-            If (ArrayHas(value.Name, Array) || value.Name = "Eternal") {
+            If (ArrayHas(value.Name, arr) || value.Name = "Eternal") {
                 If (value.IsAffix(singleitem)) {
                     isNormPrefix := true
                     If (value.Name = "Eternal") {
@@ -250,7 +328,7 @@ Class ItemEnchanter {
             }
         }
         For (id, value IN this.Affixes.Norm.Suffixes) {
-            If (ArrayHas(value.Name, Array) || value.Name = "Aid" ||
+            If (ArrayHas(value.Name, arr) || value.Name = "Aid" ||
             value.Name = "Blazing") {
                 If (value.IsAffix(singleitem)) {
                     isNormSuffix := true
@@ -264,6 +342,7 @@ Class ItemEnchanter {
                 }
             }
         }
+
         ; If we match eternal blazing we've likely matched the selected filter so stop
         If (isEternal && isBlazing) {
             this.EternalBlazingReset()
@@ -330,7 +409,7 @@ Class Affix {
             Try {
                 this.Img := LoadPicture(A_ScriptDir "\Images\Item" this.Name ".png", "GDI+", &OutImageType)
             } Catch Error As OutputVar {
-                Out.D("Error at loadpicture prefix")
+                Out.D("Error at loadpicture special")
                 Out.D(OutputVar.What)
             }
         Case 0:
@@ -351,14 +430,9 @@ Class Affix {
             Try {
                 this.Img := LoadPicture(A_ScriptDir "\Images\Prefix" this.Name ".png", "GDI+", &OutImageType)
             } Catch Error As OutputVar {
-                Out.D("Error at loadpicture prefix")
+                Out.D("Error at loadpicture default")
                 Out.D(OutputVar.What)
             }
-        }
-        If (this.Pos = 0) {
-
-        } Else {
-
         }
         Return this
     }
@@ -376,16 +450,8 @@ Class Affix {
             }
         } Catch Error As OutputVar {
             Out.D("Error at imagesearch")
-            Out.D(OutputVar.What)
+            Out.E(OutputVar)
         }
-        /*
-                If (this.Pos = 0) {
-        
-                } Else {
-        If (rect.ImageSearch(A_ScriptDir "\Images\Suffix" this.Name ".png")) {
-            Return true
-        }
-        } */
         Return false
     }
     ;@endregion
@@ -407,7 +473,6 @@ Class Affixes {
             Affix("Mercurial", 0, 77, 21, "B96345"),
             Affix("Monumental", 0, 103, 22, "B96345"),
             Affix("Perforating", 0, 94, 21, "721A04"),
-            Affix("Preeminence", 0, 107, 18, "721A04"),
             Affix("Savants", 0, 74, 25, "B96345"),
             Affix("Serrated", 0, 74, 20, "721A04"),
             Affix("Spelunkers", 0, 93, 18, "721A04")
@@ -422,6 +487,7 @@ Class Affixes {
             Affix("Igniting", 1, 61, 20, "B96345"),
             Affix("Lightless", 1, 75, 21, "721A04"),
             Affix("Necromancer", 1, 108, 15, "721A04"),
+            Affix("Preeminence", 1, 107, 18, "721A04"),
             Affix("Radiance", 1, 76, 22, "B96345"),
             Affix("Supereons", 1, 86, 21, "721A04"),
         ],
@@ -529,35 +595,3 @@ Class Affixes {
         ]
     }
 }
-/*
-Mana flow,
-Perforating,
-Universal,
-Displacing,
-Preeminence,
-Glimmering,
-Mammoth,
-Fruitful,
-Crusading,
-Glimmering,
-Spelunker,
-serrated,
-Savant,
-Fruitful,
-Compression,
-
-Acuminating,
-Behemoth,
-Brilliance,
-Infestation,
-Interstellar,
-Overlord,
-Boss,
-Colossal,
-Flaming,
-Giant,
-Swarming,
-Tiger,
-Troubadour,
-Lich
-*/
