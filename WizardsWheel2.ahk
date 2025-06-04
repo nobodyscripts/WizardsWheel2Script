@@ -61,7 +61,7 @@ Run this file to load script
 CreateScriptHotkeys() {
     Hotkey("*" Scriptkeys.GetHotkey("AutoClicker"), fAutoClicker)
     HotIfWinActive(Window.Title)
-    Hotkey("*" Scriptkeys.GetHotkey("Exit"), ExitApp)
+    Hotkey("*" Scriptkeys.GetHotkey("Exit"), fExitapp)
     Hotkey("*" Scriptkeys.GetHotkey("Reload"), fReload)
     Hotkey("*" Scriptkeys.GetHotkey("GameResize"), fGameResize)
     Hotkey("*" Scriptkeys.GetHotkey("ActiveBattle"), fActiveBattle)
@@ -73,6 +73,9 @@ CreateScriptHotkeys() {
 
 fReload(*) {
     Reload()
+}
+fExitapp(*) {
+    Exitapp()
 }
 
 Global ClipBoardInUseBlock := false
