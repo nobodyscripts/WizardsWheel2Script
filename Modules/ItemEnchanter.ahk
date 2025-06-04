@@ -4,6 +4,20 @@
 S.AddSetting("ItemEnchant", "ItemEnchantSelectedAffixes", "", "Array")
 
 Global HasOutputStartupString := false
+/* 
+Numpad0:: {
+    ** @type {ItemEnchanter} *
+    ie := ItemEnchanter()
+    out.d(ie.Affixes.Norm.Prefixes[28].Name)
+    ** @type {Affix} *
+    schAffix := ie.Affixes.Norm.Prefixes[28]
+
+    Out.d("Preloaded " ToStr(ie.singleitem.ImageSearch("HBITMAP:*" schAffix.Img, schAffix.bgCol, 70)))
+    Out.D("Direct imagesearch " ToStr(ie.singleitem.imagesearch(A_ScriptDir "\Images\PrefixScholars.png", schAffix.bgCol,
+        70
+    )))
+    Out.D("Scan " ToStr(ie.ScanSelectedAffixes(["Scholars", "Light", "Deception"])))
+} */
 
 /**
  * ItemEnchanter Enchant items until affix is found visually
@@ -26,6 +40,10 @@ Class ItemEnchanter {
     leftDropDown := cRect(516, 504, 688, 538)
     /** @type {cRect} */
     rightDropDown := cRect(758, 506, 930, 535)
+    /** @type {cRect} */
+    singleitem := cRect(263, 256, 626, 310)
+    /**  @type {cPoint} */
+    SingleItemEdge := cPoint(400, 305)
 
     ;@region EnchantItem()
     /**
@@ -34,12 +52,14 @@ Class ItemEnchanter {
     EnchantItem() {
         this.ResetDropdownsOnStart()
         Loop {
+            Start := A_TickCount
             If (this.ScanItem()) {
                 Break
             }
             this.ItemEnchantReset()
-            cPoint(400, 305).ClickOffset()
-            Sleep(100)
+            Out._OutputDebug("Loop " (A_TickCount - start) / 1000)
+            this.SingleItemEdge.ClickOffset(,,17)
+            ;Sleep(100)
         }
         MsgBox("Done")
     }
@@ -52,13 +72,17 @@ Class ItemEnchanter {
     EnchantItemSelected() {
         this.ResetDropdownsOnStart()
         arr := S.Get("ItemEnchantSelectedAffixes")
-
+        If (Type(arr) != "Array") {
+            Out.E("Enchant item selected found a non array from settings.")
+        }
         Loop {
+            Start := A_TickCount
             If (this.ScanSelectedAffixes(arr)) {
                 Break
             }
             this.ItemEnchantReset()
-            cPoint(400, 305).ClickOffset()
+            Out._OutputDebug("Loop " (A_TickCount - start) / 1000)
+            this.SingleItemEdge.ClickOffset(,,17)
             Sleep(100)
         }
         MsgBox("Done")
@@ -121,19 +145,18 @@ Class ItemEnchanter {
         isEternal := false
         isAid := false
         isBlazing := false
-        singleitem := cRect(263, 256, 626, 310)
         For (id, value IN this.Affixes.Elevated.Prefixes) {
-            If (value.IsAffix(singleitem)) {
+            If (value.IsAffix(this.singleitem)) {
                 Return true
             }
         }
         For (id, value IN this.Affixes.Elevated.Suffixes) {
-            If (value.IsAffix(singleitem)) {
+            If (value.IsAffix(this.singleitem)) {
                 Return true
             }
         }
         For (id, value IN this.Affixes.Norm.Prefixes) {
-            If (value.IsAffix(singleitem)) {
+            If (value.IsAffix(this.singleitem)) {
                 isNormPrefix := true
                 If (value.Name = "Eternal") {
                     isEternal := true
@@ -143,7 +166,7 @@ Class ItemEnchanter {
 
         }
         For (id, value IN this.Affixes.Norm.Suffixes) {
-            If (value.IsAffix(singleitem)) {
+            If (value.IsAffix(this.singleitem)) {
                 isNormSuffix := true
                 If (value.Name = "Blazing") {
                     isBlazing := true
@@ -192,9 +215,7 @@ Class ItemEnchanter {
     ;@endregion
 
     ItemEnchantReset() {
-        If (this.Enchanted.IsColour("0xFFFFFF")) {
-            Out.I("Is enchanted")
-        } Else {
+        If (!this.Enchanted.IsColour("0xFFFFFF")) {
             Return true
         }
         Sample := this.ItemSample.GetColour()
@@ -274,9 +295,6 @@ Class ItemEnchanter {
             Out.I("No affix selected, aborting.")
             Return false
         }
-
-        isNormPrefix := false
-        isNormSuffix := false
         isEternal := false
         isAid := false
         isBlazing := false
@@ -285,17 +303,16 @@ Class ItemEnchanter {
             HasOutputStartupString := true
         }
 
-        singleitem := cRect(263, 256, 626, 310)
-
         ; If 'shifting' special case
-        If (ArrayHas("Shifting", arr) && this.Affixes.Special.Item[2].IsAffix(singleitem)) {
+        If (ArrayHas("Shifting", arr) &&
+        this.Affixes.Special.Item[2].IsAffix(this.singleitem)) {
             MsgBox("Matched on Shifting")
             Return true
         }
 
         For (id, value IN this.Affixes.Elevated.Prefixes) {
             If (ArrayHas(value.Name, arr)) {
-                If (value.IsAffix(singleitem)) {
+                If (value.IsAffix(this.singleitem)) {
                     MsgBox("Matched on " value.Name)
                     Return true
                 }
@@ -304,12 +321,13 @@ Class ItemEnchanter {
         For (id, value IN this.Affixes.Elevated.Suffixes) {
             If (ArrayHas(value.Name, arr)) {
                 If (value.Name = "Necromancer") {
-                    If (value.IsAffix(singleitem) && !this.Affixes.Special.Item[1].IsAffix(singleitem)) {
+                    If (value.IsAffix(this.singleitem) &&
+                    !this.Affixes.Special.Item[1].IsAffix(this.singleitem)) {
                         MsgBox("Matched on " value.Name)
                         Return true
                     }
                 } Else {
-                    If (value.IsAffix(singleitem)) {
+                    If (value.IsAffix(this.singleitem)) {
                         MsgBox("Matched on " value.Name)
                         Return true
                     }
@@ -318,27 +336,30 @@ Class ItemEnchanter {
         }
         For (id, value IN this.Affixes.Norm.Prefixes) {
             If (ArrayHas(value.Name, arr) || value.Name = "Eternal") {
-                If (value.IsAffix(singleitem)) {
-                    isNormPrefix := true
+                If (value.IsAffix(this.singleitem)) {
                     If (value.Name = "Eternal") {
                         isEternal := true
+                        Break
+                    } else {
+                        return true
                     }
-                    Break
                 }
             }
         }
         For (id, value IN this.Affixes.Norm.Suffixes) {
             If (ArrayHas(value.Name, arr) || value.Name = "Aid" ||
             value.Name = "Blazing") {
-                If (value.IsAffix(singleitem)) {
-                    isNormSuffix := true
+                If (value.IsAffix(this.singleitem)) {
                     If (value.Name = "Blazing") {
                         isBlazing := true
+                        Break
                     }
                     If (value.Name = "Aid") {
                         isAid := true
+                        Break
+                    } else {
+                        return true
                     }
-                    Break
                 }
             }
         }
@@ -361,7 +382,7 @@ Class ItemEnchanter {
          */
         ArrayHas(Name, affixList) {
             For (id, value IN affixList) {
-                If (value = Name) {
+                If (StrLower(value) = StrLower(Name)) {
                     Return true
                 }
             }
@@ -409,29 +430,29 @@ Class Affix {
             Try {
                 this.Img := LoadPicture(A_ScriptDir "\Images\Item" this.Name ".png", "GDI+", &OutImageType)
             } Catch Error As OutputVar {
-                Out.D("Error at loadpicture special")
-                Out.D(OutputVar.What)
+                Out.E("Issue at loadpicture suffix")
+                Out.E(OutputVar)
             }
         Case 0:
             Try {
                 this.Img := LoadPicture(A_ScriptDir "\Images\Prefix" this.Name ".png", "GDI+", &OutImageType)
             } Catch Error As OutputVar {
-                Out.D("Error at loadpicture prefix")
-                Out.D(OutputVar.What)
+                Out.E("Issue at loadpicture suffix")
+                Out.E(OutputVar)
             }
         Case 1:
             Try {
                 this.Img := LoadPicture(A_ScriptDir "\Images\Suffix" this.Name ".png", "GDI+", &OutImageType)
             } Catch Error As OutputVar {
-                Out.D("Error at loadpicture suffix")
-                Out.D(OutputVar.What)
+                Out.E("Issue at loadpicture suffix")
+                Out.E(OutputVar)
             }
         default:
             Try {
                 this.Img := LoadPicture(A_ScriptDir "\Images\Prefix" this.Name ".png", "GDI+", &OutImageType)
             } Catch Error As OutputVar {
-                Out.D("Error at loadpicture default")
-                Out.D(OutputVar.What)
+                Out.E("Issue at loadpicture suffix")
+                Out.E(OutputVar)
             }
         }
         Return this
@@ -445,7 +466,7 @@ Class Affix {
      */
     IsAffix(rect) {
         Try {
-            If (rect.ImageSearch("HBITMAP:*" this.Img, this.bgCol)) {
+            If (rect.ImageSearch("HBITMAP:*" this.Img, this.bgCol, 100)) {
                 Return true
             }
         } Catch Error As OutputVar {
