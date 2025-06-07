@@ -2,6 +2,7 @@
 
 #Include ..\ScriptLib\cGUI.ahk
 
+#Include ActiveBattleGUI.ahk
 #Include GeneralSettingsGUI.ahk
 #Include ScriptHotkeysGUI.ahk
 #Include EventItemGUI.ahk
@@ -79,10 +80,6 @@ Button_Click_Resize(thisGui, info) {
 
 Button_Click_IronChef(thisGui, info) {
     fIronChef()
-}
-
-Button_Click_ActiveBattle(thisGui, info) {
-    fActiveBattle()
 }
 
 Button_Click_DimensionPushing(*) {

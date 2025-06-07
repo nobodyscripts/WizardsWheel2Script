@@ -3,8 +3,13 @@
 #Include ..\ScriptLib\cPoint.ahk
 #Include ..\ScriptLib\cRect.ahk
 
-;S.AddSetting("TestSection", "TestVar", "true, array, test", "Array")
-
+S.AddSetting("ActiveBattle", "MimicClickEnable", true, "Bool")
+S.AddSetting("ActiveBattle", "GemBoostEnable", true, "Bool")
+S.AddSetting("ActiveBattle", "JewelBoostEnable", true, "Bool")
+S.AddSetting("ActiveBattle", "WizardClickEnable", true, "Bool")
+S.AddSetting("ActiveBattle", "SkillsClickEnable", true, "Bool")
+S.AddSetting("ActiveBattle", "WheelClickEnable", true, "Bool")
+S.AddSetting("ActiveBattle", "ArtifactClickEnable", true, "Bool")
 
 fActiveBattle(*) {
     Window.Activate()
@@ -16,48 +21,101 @@ fActiveBattle(*) {
  * @module ActiveBattle
  */
 Class ActiveBattle {
+    ;@region Properties
     /** @type {Bool} */
     CanUseJewelBoost := false
     /** @type {Bool} */
     CanUseGemBoost := false
     /** @type {cPoint} */
-    AreaSample := cPoint(,)
-    /** @type {cPoint} */
-    JewelBuffCheck := cPoint(,)
-    /** @type {cPoint} */
-    GemBuffCheck := cPoint(,)
-    /** @type {cPoint} */
-    SpeedBoostWheel := cPoint(,)
-    /** @type {cPoint} */
-    WizardCheck := cPoint(,)
-    /** @type {cPoint} */
-    Skill1 := cPoint(,)
-    /** @type {cPoint} */
-    Skill2 := cPoint(,)
-    /** @type {cPoint} */
-    Skill3 := cPoint(,)
+    AreaSample := cPoint(1120, 8)
     /** @type {cRect} */
-    SpeedBoostWheelCheck := cRect(, , ,)
+    JewelBuffCheck := cRect(571, 136, 704, 160)
+    /** @type {cPoint} */
+    GemBuffCheck := cPoint(1192, 239)
+    /** @type {cPoint} */
+    GemBuffConfirm := cPoint(832, 377)
+    /** @type {cPoint} */
+    SpeedBoostWheel := cPoint(1196, 575)
+    /** @type {cPoint} */
+    WizardCheck := cPoint(1003, 660)
+    /** @type {cPoint} */
+    Skill1 := cPoint(1123, 463)
+    /** @type {cPoint} */
+    Skill2 := cPoint(1183, 462)
+    /** @type {cPoint} */
+    Skill3 := cPoint(1243, 464)
     /** @type {cRect} */
-    MimicArea := cRect(, , ,)
+    SpeedBoostWheelCheck := cRect(1168, 560, 1221, 589)
+    /** @type {cRect} */
+    MimicArea := cRect(287, 168, 1005, 486)
+
+    ; Inventory top 5 slots for artifacts
+    /** @type {cPoint} */
+    Inv1 := cPoint(29, 442)
+    /** @type {cRect} */
+    Inv1Text := cRect(18, 444, 35, 457)
+    /** @type {cPoint} */
+    Inv2 := cPoint(77, 440)
+    /** @type {cRect} */
+    Inv2Text := cRect(69, 443, 89, 460)
+    /** @type {cPoint} */
+    Inv3 := cPoint(28, 492)
+    /** @type {cRect} */
+    Inv3Text := cRect(16, 495, 36, 512)
+    /** @type {cPoint} */
+    Inv4 := cPoint(81, 495)
+    /** @type {cRect} */
+    Inv4Text := cRect(70, 495, 88, 511)
+    /** @type {cPoint} */
+    Inv5 := cPoint(26, 545)
+    /** @type {cRect} */
+    Inv5Text := cRect(17, 548, 35, 563)
+
+    /** To be used for jewel buff, needs colour samples
+     * @type {cPoint} */
+    Inv6 := cPoint(79, 545)
+
+    LeftBar := cPoint(1, 164)
+    TopBar := cPoint(634, 5)
+    RightBar := cPoint(1274, 206)
+    ;@endregion
 
     ;@region Run()
     /**
      * Activate all enabled maintainers for mid combat
      */
     Run() {
-        Static toggle := true
-        If (toggle) {
-            this.MaintainWheel(true) ; Run as timer doesn't execute straight away
-            this.MaintainSkills()
-            this.MaintainMimics()
+        StartFeatureOrReload()
+        GemBoostEnable := S.Get("GemBoostEnable")
+        JewelBoostEnable := S.Get("JewelBoostEnable")
+        MimicClickEnable := S.Get("MimicClickEnable")
+        WizardClickEnable := S.Get("WizardClickEnable")
+        SkillsClickEnable := S.Get("SkillsClickEnable")
+        WheelClickEnable := S.Get("WheelClickEnable")
+        ArtifactClickEnable := S.Get("ArtifactClickEnable")
+        Loop {
+            If (WheelClickEnable) {
+                this.MaintainWheel()
+            }
+            If (SkillsClickEnable) {
+                this.MaintainSkills()
+            }
+            If (MimicClickEnable) {
+                this.MaintainMimics()
+            }
+            If (GemBoostEnable) {
+                this.RefreshGemBoost()
+            }
+            If (JewelBoostEnable) {
+                this.RefreshJewelBoost()
+            }
+            If (WizardClickEnable) {
+                this.MaintainWizard()
+            }
+            If (ArtifactClickEnable) {
+                this.MaintainArtifacts()
+            }
         }
-        SetTimer(this.MaintainWheel, 72 * (toggle))
-        SetTimer(this.MaintainSkills, 72 * (toggle))
-        SetTimer(this.MaintainMimics, 72 * (toggle))
-        SetTimer(this.RefreshGemBoost, 72 * (toggle))
-        SetTimer(this.RefreshJewelBoost, 72 * (toggle))
-        SetTimer(this.MaintainWizard, 72 * (toggle))
 
         toggle := !toggle
     }
@@ -69,9 +127,9 @@ Class ActiveBattle {
      * @returns {Boolean} 
      */
     IsRoundActive() {
-        LeftBarColour := cPoint(1, 164).GetColour()
-        TopBarColour := cPoint(634, 5).GetColour()
-        RightBarColour := cPoint(1274, 206).GetColour()
+        LeftBarColour := this.LeftBar.GetColour()
+        TopBarColour := this.TopBar.GetColour()
+        RightBarColour := this.RightBar.GetColour()
         If (LeftBarColour = TopBarColour && RightBarColour = TopBarColour) {
             Return true
         }
@@ -150,11 +208,19 @@ Class ActiveBattle {
      * Description
      */
     IsJewelBuffActive() {
-        colour := this.JewelBuffCheck.GetColour()
-        If (colour = "0xFFFFFF" || colour = "0xE5E5FF") {
+        ; Search for yellow text for active buff
+        ; Search for FBFF00
+        If (this.JewelBuffCheck.PixelSearch("0xFBFF00", 30)) {
             Return true
         }
-        Out.I("Jewel col " colour)
+        ; Search for E3E580
+        If (this.JewelBuffCheck.PixelSearch("0xE3E580", 30)) {
+            Return true
+        }
+        ; Search for FDCA00
+        If (this.JewelBuffCheck.PixelSearch("0xFDCA00", 30)) {
+            Return true
+        }
         Return false
     }
     ;@endregion
@@ -165,38 +231,25 @@ Class ActiveBattle {
      */
     IsGemBuffActive() {
         colour := this.GemBuffCheck.GetColour()
-        If (colour = "0xFFFFFF" || colour = "0xE5E5FF") {
+        If (colour = "0xFFFFFF" || colour = "0xE5E5FF" || colour = "0xF5F5F5") {
             Return true
         }
-        Out.I("Gem col " colour)
+        Out.I("Gem buff inactive, found colour " colour)
         Return false
     }
     ;@endregion
-    /*
-    IsGemBuffActive() {
-        ; Search for yellow text for active buff
-        ; Search for FBFF00
-        found := cRect(1074, 274, 1490, 315)
-        found.PixelSearch("0xFBFF00")
-        If (found && found[1] > 0) {
-            Return true
-        }
-        ; Search for E3E580
-        found := cRect(1074, 274, 1490, 315)
-        found.PixelSearch("0xE3E580")
-        If (found && found[1] > 0) {
-            Return true
-        }
-        Return false
-    } */
 
     ;@region UseGemBoost()
     /**
      * Purchase gem boost (3 gem icon)
      */
     UseGemBoost() {
-        If (this.CanUseGemBoost) {
-            SoundBeep()
+        Out.D("Gem boost available")
+        If (!this.IsGemBuffActive()) {
+            this.GemBuffCheck.ClickOffset()
+            this.GemBuffConfirm.WaitWhileNotColourS("0x9FEDAC", 1)
+            If (this.GemBuffConfirm.IsColour("0x9FEDAC"))
+                this.GemBuffConfirm.ClickOffset()
         }
     }
     ;@endregion
@@ -206,8 +259,15 @@ Class ActiveBattle {
      * Use an available jewel boost
      */
     UseJewelBoost() {
-        If (this.CanUseJewelBoost) {
-            SoundBeep()
+        If (!this.IsJewelBuffActive()) {
+            If (!(this.Inv6.GetColour() = this.LeftBar.GetColour())) {
+                Out.D("Jewel boost available")
+                Out.D("Inv6 colour sample is " this.Inv6.GetColour())
+                SoundBeep()
+            } Else {
+                Out.I("Jewel boost check aborted as no jewel found to use.")
+                Out.D("Inv6 " this.Inv6.GetColour() " left bar " this.LeftBar.GetColour())
+            }
         }
     }
     ;@endregion
@@ -235,7 +295,6 @@ Class ActiveBattle {
     ;@endregion
 
     MaintainWheel(spamTen := false) {
-        ;2392 1272 (1440)
         If (!Window.Activate()) {
             MsgBox("Wizard's Wheel 2: Window not found")
             Reload()
@@ -335,6 +394,30 @@ Class ActiveBattle {
         If (this.IsWizardChanged()) {
             this.WizardCheck.ClickOffset()
         }
+    }
+    ;@endregion
+
+    ;@region MaintainArtifacts()
+    /**
+     * Description
+     */
+    MaintainArtifacts(slot1 := true, slot2 := true, slot3 := true, slot4 := true, slot5 := true) {
+        If (slot1 && !this.Inv1Text.PixelSearch("0x000000", 30)) {
+            this.Inv1.ClickOffset()
+        }
+        If (slot2 && !this.Inv2Text.PixelSearch("0x000000", 30)) {
+            this.Inv2.ClickOffset()
+        }
+        If (slot3 && !this.Inv3Text.PixelSearch("0x000000", 30)) {
+            this.Inv3.ClickOffset()
+        }
+        If (slot4 && !this.Inv4Text.PixelSearch("0x000000", 30)) {
+            this.Inv4.ClickOffset()
+        }
+        If (slot5 && !this.Inv5Text.PixelSearch("0x000000", 30)) {
+            this.Inv5.ClickOffset()
+        }
+
     }
     ;@endregion
 }

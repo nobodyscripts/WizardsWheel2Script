@@ -23,7 +23,6 @@ Button_Click_ItemEnchanter(thisGui, info) {
 
     /** @type {cGUI} */
     optionsGui := cGui(, "Item Enchanter Settings")
-    optionsGui.Opt("")
     optionsGui.SetUserFontSettings()
 
     optionsGui.AddText("", "Elevated Prefixes")

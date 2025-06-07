@@ -23,7 +23,6 @@ Button_Click_GeneralSettings(thisGui, info) {
     GuiFontColour := S.Get("GuiFontColour")
     /** @type {cGUI} */
     settingsGUI := cGui(, "General Settings")
-    settingsGUI.Opt("")
     settingsGUI.SetUserFontSettings()
 
     If (EnableLogging = true) {

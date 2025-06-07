@@ -1,7 +1,5 @@
 #Requires AutoHotkey v2.0
 
-#Include ..\Lib\cColours.ahk
-
 ;S.AddSetting("TestSection", "TestVar", "true, array, test", "Array")
 
 /**
@@ -58,12 +56,11 @@ Class Village {
      * Check if current view is of the Village
      */
     IsVillage() {
-        Static ccolours := Colours()
         c := this.Points.UITest.GetColour()
-        If (ccolours.Diff("0x3B8D9E", c) = 0 || ; U1
+        If (ColourDiff("0x3B8D9E", c) = 0 || ; U1
         ; TODO Add U2/U5
-        ccolours.Diff("0x856D26", c) = 0 || ; U3
-        ccolours.Diff("0x15C17B", c) = 0  ; U4
+        ColourDiff("0x856D26", c) = 0 || ; U3
+        ColourDiff("0x15C17B", c) = 0  ; U4
         ) {
             Return true
         }
@@ -78,7 +75,7 @@ Class Village {
      */
     CloseInventory() {
         c := this.Points.Close.GetColour()
-        If (Colours().Diff("0xF50000", c) < 50) {
+        If (ColourDiff("0xF50000", c) < 50) {
             val := this.Points.Close.ClickOffsetWhileColour(c)
             Sleep(150)
             Return val
@@ -93,7 +90,7 @@ Class Village {
      */
     OpenOptions() {
         c := this.Points.OptionsOpen.GetColour()
-        If (Colours().Diff("0xC6CBDE", c) < 50) {
+        If (ColourDiff("0xC6CBDE", c) < 50) {
             Out.D("Opening options")
             this.Points.OptionsOpen.ClickOffsetWhileColour(c, , 2, 2)
         }
@@ -110,9 +107,9 @@ Class Village {
         c1 := this.Points.OptionsLoadSave.GetColour()
         c2 := this.Points.OptionsCopySave.GetColour()
         c3 := this.Points.OptionsCloudSave.GetColour()
-        If (Colours().Diff("0x9FEDAC", c1) < 10 &&
-        Colours().Diff("0x9FEDAC", c2) < 10 &&
-        Colours().Diff("0x9FEDAC", c3) < 10) {
+        If (ColourDiff("0x9FEDAC", c1) < 10 &&
+        ColourDiff("0x9FEDAC", c2) < 10 &&
+        ColourDiff("0x9FEDAC", c3) < 10) {
             ;Out.D("Options open")
             Return true
         }

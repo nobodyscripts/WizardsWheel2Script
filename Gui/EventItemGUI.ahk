@@ -14,13 +14,13 @@ Button_Click_EventItem(*) {
     Out.I("Global Event Items: Amount " EventItemAmount " Good " EventItemGood
         " Perf " EventItemPerfect " Socketed " EventItemSocketed
         " Store " EventItemStoreSlot " Armour " EventItemTypeArmour " EventID " EventID)
-    optionsGUI := cGui(, "Options: Event Items")
-    optionsGUI.Opt("+MinSize +MinSize500x")
-    optionsGUI.BackColor := "0c0018"
-    optionsGUI.Add("Text", "ccfcfcf",
+    optionsGUI := cGui(, "Event Items")
+    optionsGUI.SetUserFontSettings()
+
+    optionsGUI.Add("Text", "",
         "Start running while in inventory screen,`r`nwith save to clipboard and slot free.")
 
-    optionsGUI.Add("Text", "ccfcfcf", "Event Items Amount:")
+    optionsGUI.Add("Text", "", "Event Items Amount:")
     optionsGUI.AddEdit()
     If (IsInteger(EventItemAmount) && EventItemAmount > 0) {
         optionsGUI.Add("UpDown", "vAmount Range1-12", EventItemAmount)
@@ -31,25 +31,25 @@ Button_Click_EventItem(*) {
     optionsGUI.Add("Text", , "")
 
     If (EventItemGood = true) {
-        optionsGUI.Add("CheckBox", "vIsGood ccfcfcf checked", "90%+ Quality")
+        optionsGUI.Add("CheckBox", "vIsGood  checked", "90%+ Quality")
     } Else {
-        optionsGUI.Add("CheckBox", "vIsGood ccfcfcf", "90%+ Quality")
+        optionsGUI.Add("CheckBox", "vIsGood ", "90%+ Quality")
     }
 
     If (EventItemPerfect = true) {
-        optionsGUI.Add("CheckBox", "vIsPerfect ccfcfcf checked", "100% Quality")
+        optionsGUI.Add("CheckBox", "vIsPerfect  checked", "100% Quality")
     } Else {
-        optionsGUI.Add("CheckBox", "vIsPerfect ccfcfcf", "100% Quality")
+        optionsGUI.Add("CheckBox", "vIsPerfect ", "100% Quality")
     }
 
     If (EventItemSocketed = true) {
-        optionsGUI.Add("CheckBox", "vIsSocketed ccfcfcf checked", "Socketed")
+        optionsGUI.Add("CheckBox", "vIsSocketed  checked", "Socketed")
     } Else {
-        optionsGUI.Add("CheckBox", "vIsSocketed ccfcfcf", "Socketed")
+        optionsGUI.Add("CheckBox", "vIsSocketed ", "Socketed")
     }
 
     optionsGUI.Add("Text", , "")
-    optionsGUI.Add("Text", "ccfcfcf", "Season:")
+    optionsGUI.Add("Text", "", "Season:")
 
     If (EventID > 0 && EventID < 5) {
         optionsGUI.Add("DropDownList", "vEventID Choose" EventID, [
@@ -70,7 +70,7 @@ Button_Click_EventItem(*) {
     }
 
     optionsGUI.Add("Text", , "")
-    optionsGUI.Add("Text", "ccfcfcf", "Event store slot:")
+    optionsGUI.Add("Text", "", "Event store slot:")
     Switch (EventID) {
     Case 1:
         If (EventItemStoreSlot > 0 && EventItemStoreSlot < 9) {
@@ -160,18 +160,23 @@ Button_Click_EventItem(*) {
     }
 
     optionsGUI.Add("Text", , "")
-    optionsGUI.Add("Text", "ccfcfcf", "Item type:")
+    optionsGUI.Add("Text", "", "Item type:")
     If (EventItemTypeArmour) {
-        optionsGUI.Add("Radio", "vItemType ccfcfcf", "Weapon")
-        optionsGUI.Add("Radio", "ccfcfcf checked", "Armour")
+        optionsGUI.Add("Radio", "vItemType ", "Weapon")
+        optionsGUI.Add("Radio", " checked", "Armour")
     } Else {
-        optionsGUI.Add("Radio", "vItemType ccfcfcf checked", "Weapon")
-        optionsGUI.Add("Radio", "ccfcfcf", "Armour")
+        optionsGUI.Add("Radio", "vItemType  checked", "Weapon")
+        optionsGUI.Add("Radio", "", "Armour")
     }
 
     optionsGUI.Add("Button", "default", "Run and Save").OnEvent("Click", ProcessUserEventItemsSettings)
-    optionsGUI.Add("Button", "default yp", "Save").OnEvent("Click", UserEventItemsSave)
-    optionsGUI.Add("Button", "default yp", "Cancel").OnEvent("Click", UserEventItemsCancel)
+    optionsGUI.Add("Button", "yp", "Save").OnEvent("Click", UserEventItemsSave)
+    optionsGUI.Add("Button", "yp", "Cancel").OnEvent("Click", UserEventItemsCancel)
+
+    optionsGUI.ShowGUIPosition()
+    optionsGUI.MakeGUIResizableIfOversize()
+    optionsGUI.OnEvent("Size", optionsGUI.SaveGUIPositionOnResize.Bind(optionsGUI))
+    OnMessage(0x0003, optionsGUI.SaveGUIPositionOnMove.Bind(optionsGUI))
 
     ProcessUserEventItemsSettings(*) {
         UserEventItemsSave()
@@ -208,5 +213,4 @@ Button_Click_EventItem(*) {
     UserEventItemsCancel(*) {
         optionsGUI.Hide()
     }
-    optionsGUI.Show("w300")
 }

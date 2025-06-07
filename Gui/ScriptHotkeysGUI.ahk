@@ -6,7 +6,6 @@ Button_Click_ScriptHotkeys(thisGui, info) {
 
     /** @type {cGUI} */
     optionsGUI := cGui(, "Script Hotkey Customisation")
-    optionsGUI.Opt("")
     optionsGUI.SetUserFontSettings()
     i := 1
     first := true
@@ -30,9 +29,9 @@ Button_Click_ScriptHotkeys(thisGui, info) {
 
     optionsGUI.Add("Button", "+Background" S.Get("GuiBGColour") " default xs", "Save").OnEvent("Click",
         SaveScriptHotkeysInput)
-    optionsGUI.Add("Button", "+Background" S.Get("GuiBGColour") " default yp", "Cancel").OnEvent("Click",
+    optionsGUI.Add("Button", "+Background" S.Get("GuiBGColour") " yp", "Cancel").OnEvent("Click",
         CloseScriptHotkeys)
-    optionsGUI.Add("Button", "+Background" S.Get("GuiBGColour") " default yp", "Reset To Defaults").OnEvent("Click",
+    optionsGUI.Add("Button", "+Background" S.Get("GuiBGColour") " yp", "Reset To Defaults").OnEvent("Click",
         ResetScriptHotKeys)
 
     optionsGUI.ShowGUIPosition()
