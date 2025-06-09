@@ -32,6 +32,8 @@ Class ActiveBattle {
     JewelBuffCheck := cRect(571, 136, 704, 160)
     /** @type {cPoint} */
     GemBuffCheck := cPoint(1192, 239)
+    /** @type {cRect} */
+    GemBuffText := cRect(1186, 269, 1264, 278)
     /** @type {cPoint} */
     GemBuffConfirm := cPoint(832, 377)
     /** @type {cPoint} */
@@ -85,7 +87,7 @@ Class ActiveBattle {
      * Activate all enabled maintainers for mid combat
      */
     Run() {
-        StartFeatureOrReload()
+        Window.StartOrReload()
         GemBoostEnable := S.Get("GemBoostEnable")
         JewelBoostEnable := S.Get("JewelBoostEnable")
         MimicClickEnable := S.Get("MimicClickEnable")
@@ -231,10 +233,11 @@ Class ActiveBattle {
      */
     IsGemBuffActive() {
         colour := this.GemBuffCheck.GetColour()
-        If (colour = "0xFFFFFF" || colour = "0xE5E5FF" || colour = "0xF5F5F5") {
+        If (this.GemBuffText.PixelSearch("0x000000") &&
+        (colour = "0xFFFFFF" || colour = "0xE5E5FF" || colour = "0xF5F5F5")) {
             Return true
         }
-        Out.I("Gem buff inactive, found colour " colour)
+        Out.I("Gem buff inactive, found colour " colour " and black pixels were " BinToStr(this.GemBuffText.PixelSearch("0x000000")))
         Return false
     }
     ;@endregion
@@ -246,10 +249,10 @@ Class ActiveBattle {
     UseGemBoost() {
         Out.D("Gem boost available")
         If (!this.IsGemBuffActive()) {
-            this.GemBuffCheck.ClickOffset()
+            this.GemBuffCheck.ClickOffset(5,5)
             this.GemBuffConfirm.WaitWhileNotColourS("0x9FEDAC", 1)
             If (this.GemBuffConfirm.IsColour("0x9FEDAC"))
-                this.GemBuffConfirm.ClickOffset()
+                this.GemBuffConfirm.ClickOffset(5,5)
         }
     }
     ;@endregion
@@ -261,6 +264,11 @@ Class ActiveBattle {
     UseJewelBoost() {
         If (!this.IsJewelBuffActive()) {
             If (!(this.Inv6.GetColour() = this.LeftBar.GetColour())) {
+                If (this.Inv6.IsColour("0x1E1C00")) {
+                    Out.D("Green jewel boost used")
+                    this.Inv6.ClickOffset()
+                    Return
+                }
                 Out.D("Jewel boost available")
                 Out.D("Inv6 colour sample is " this.Inv6.GetColour())
                 SoundBeep()

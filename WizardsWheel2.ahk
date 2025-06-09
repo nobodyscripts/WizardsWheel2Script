@@ -1,25 +1,42 @@
 ﻿#Requires AutoHotkey v2.0
 #MaxThreadsPerHotkey 8
 #SingleInstance Force
-; #Warn All
+#Warn All, StdOut
 
+; ------------------- Readme -------------------
 /**
- * Main script file, run this to activate gui and hotkeys
+ * See Readme.md for readme
+ * Run this file to load script, run this to activate gui and hotkeys
  */
 
 /** @type {cLog} */
-Out := cLog(A_ScriptDir "\WizardsWheel2.log", true, 3, false)
+Global Out := cLog(A_ScriptDir "\WizardsWheel2.log", true, 3, false)
+
+/** @type {cToolTip} */
+Global gToolTip := cToolTip()
+
+/** Update checking class, checks version against github in a low bandwidth approach
+ * @type {UpdateChecker} */
+Global Updater := UpdateChecker()
+
+Updater.ZipDownload := "https://github.com/nobodyscripts/wizardswheel2script/archive/refs/heads/main.zip"
+Updater.ZipFolder := "wizardswheel2script-main"
+Updater.RemoteJson := "https://raw.githubusercontent.com/nobodyscripts/wizardswheel2script/main/Version.json"
+Updater.ScriptName := "WW2 NobodyScript"
 
 /** @type {cGameWindow} */
-Window := cGameWindow("Wizard's Wheel 2 ahk_class UnityWndClass ahk_exe Wizard's Wheel 2.exe", 1278, 664)
+Global Window := cGameWindow("Wizard's Wheel 2 ahk_class UnityWndClass ahk_exe Wizard's Wheel 2.exe", 1278, 664)
 
 #Include Gui\MainGUI.ahk
 
 #Include ScriptLib\cGameWindow.ahk
 #Include ScriptLib\cLogging.ahk
 #Include ScriptLib\cSettings.ahk
+#Include ScriptLib\cUpdateChecker.ahk
+#Include ScriptLib\cToolTip.ahk
 
 #Include Lib\cHotkeysInitScript.ahk
+#Include Lib\Misc.ahk
 
 #Include Modules\ActiveBattle.ahk
 #Include Modules\Dimension.ahk
@@ -35,26 +52,15 @@ DetectHiddenWindows(true)
 Persistent() ; Prevent the script from exiting automatically.
 
 If (!S.initSettings()) {
-    ; If the first load fails, it attempts to write a new config, this retrys
-    ; loading after that first failure
-    ; Hardcoding 2 attempts because a loop could continuously error
-    Sleep(50)
-    If (!S.initSettings()) {
-        MsgBox(
-            "Script failed to load settings, script closing, try restarting.")
-        ExitApp()
-    }
+    MsgBox(
+        "Script failed to load settings, script closing, try restarting.")
+    ExitApp()
 }
+
 Out.I("Script loaded")
 RunGui()
 ; Setup script hotkeys
 CreateScriptHotkeys()
-
-; ------------------- Readme -------------------
-/*
-See Readme.md for readme
-Run this file to load script
-*/
 
 ; ------------------- Script Triggers -------------------
 
@@ -97,7 +103,8 @@ Global ClipBoardInUseBlock := false
             )
             ;"Current zone colour: " Points.ZoneSample.GetColour()
         )
-        A_Clipboard := "cPoint(" clientx ", " clienty ")"
+        Out.D("cPoint(" clientx ", " clienty ").IsColour(" PixelGetColor(clientx, clienty) ")")
+        ;A_Clipboard := "cPoint(" clientx ", " clienty ")"
     }
 
     ~WheelDown:: {
@@ -154,26 +161,3 @@ fGameResize(*) {
             .W "*" Window.H)
     }
 }
-/*
-fMineStart(*) {
-    Static on13 := false
-    Out.I("Insert: Pressed")
-    InitScriptHotKey()
-    If (on13 := !on13) {
-        Out.I("Insert: Mine Mantainer Activated")
-        ;fMineMaintainer()
-    } Else {
-        Out.I("Insert: Resetting")
-        cReload()
-        Return
-    }
-} */
-
-
-IsLBRScriptActive() {
-    If (WinExist("\LeafBlowerV3.ahk ahk_class AutoHotkey")) {
-        Return true
-    }
-    Return false
-}
-
